@@ -6,7 +6,7 @@ from tkinter import simpledialog
 from collections import deque
 from pathlib import Path
 import psutil
-from PIL import Image, ImageTk, ImageSequence
+from PIL import Image, ImageTk, ImageSequence, ImageEnhance
 
 from app_config import (
     has_gemini_api_key,
@@ -22,6 +22,11 @@ BASE_DIR = Path(__file__).resolve().parent
 
 SYSTEM_NAME = "J.A.R.V.I.S"
 MODEL_BADGE = "ASISTENTE DE VOZ · Windows"
+UI_TEMPLATES = {
+    "sukima": "MANDO SUKIMA",
+    "visor": "VISOR AZUL",
+    "tactico": "MAPA TÁCTICO",
+}
 SPANISH_MONTHS = (
     "enero", "febrero", "marzo", "abril", "mayo", "junio",
     "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
@@ -576,6 +581,16 @@ class JarvisUI:
         self._normal_size = (self.W, self.H)
         self._fullscreen = True
 
+        self._ui_template = str(load_app_config().get("ui_template", "sukima"))
+        if self._ui_template not in UI_TEMPLATES:
+            self._ui_template = "sukima"
+        self._template_source = {}
+        for key, filename in (("visor", "ui_visor.png"), ("tactico", "ui_tactical.png")):
+            try:
+                self._template_source[key] = Image.open(assets_dir / filename).convert("RGB")
+            except (OSError, ValueError):
+                pass
+        self._template_background_photo = None
         self._set_layout_metrics(self.W, self.H)
 
         # ── State ────────────────────────────────────────────────────────────
@@ -660,7 +675,7 @@ class JarvisUI:
             "panel_x": 14,
             "panel_y": HDR_H + 10,
             "panel_w": 320,
-            "panel_h": 292,
+            "panel_h": 344,
         }
         self.setup_frame = None
         self.api_entry = None
@@ -759,6 +774,7 @@ class JarvisUI:
         self._build_shutdown_button()
         self._build_settings_panel()
         self._build_voice_selector(self._settings_body)
+        self._build_template_selector(self._settings_body)
         self._build_sfx_button(self._settings_body)
         self._build_api_button(self._settings_body)
         self._build_fx_slider(self._settings_body)
@@ -772,6 +788,7 @@ class JarvisUI:
         self.root.bind("<Command-m>", lambda e: self._toggle_mute())
         self.root.bind("<Escape>",    lambda e: self._shutdown())
         self.root.bind("<F5>",        lambda e: self._toggle_pause())
+        self.root.bind("<F6>",        lambda e: self._cycle_ui_template())
         self.root.bind("<F11>",       lambda e: self._toggle_fullscreen())
         self.root.bind("<Command-f>", lambda e: self._toggle_fullscreen())
 
@@ -1048,6 +1065,8 @@ class JarvisUI:
         self._volume_scale.place(x=0, y=136, width=inner_w, height=26)
         self._voice_label.place(x=0, y=178)
         self._voice_menu.place(x=88, y=172, width=inner_w - 88, height=30)
+        self._template_label.place(x=0, y=216)
+        self._template_menu.place(x=88, y=210, width=inner_w - 88, height=30)
 
     def _refresh_settings_status(self):
         if not hasattr(self, "_settings_status_primary"):
@@ -1303,6 +1322,45 @@ class JarvisUI:
         if self.on_voice_change:
             threading.Thread(target=self.on_voice_change, args=(voice,), daemon=True).start()
 
+    def _build_template_selector(self, parent):
+        self._template_var = tk.StringVar(value=UI_TEMPLATES[self._ui_template])
+        self._template_label = tk.Label(parent, text="INTERFAZ", fg=C_MID,
+                                        bg=parent.cget("bg"), font=font_body_bold(8))
+        self._template_menu = tk.OptionMenu(parent, self._template_var,
+                                            *UI_TEMPLATES.values(), command=self._on_template_select)
+        self._template_menu.config(fg=C_PRI, bg=C_PANEL, activeforeground=C_BG,
+                                   activebackground=C_PRI, font=font_body(10),
+                                   borderwidth=0, highlightthickness=1,
+                                   highlightbackground=C_MID)
+        self._template_menu["menu"].config(fg=C_PRI, bg=C_PANEL, font=font_body(10),
+                                            activeforeground=C_BG, activebackground=C_PRI)
+
+    def _on_template_select(self, label):
+        key = next((name for name, value in UI_TEMPLATES.items() if value == label), "sukima")
+        self._set_ui_template(key)
+
+    def _cycle_ui_template(self):
+        keys = tuple(UI_TEMPLATES)
+        self._set_ui_template(keys[(keys.index(self._ui_template) + 1) % len(keys)])
+
+    def _set_ui_template(self, key):
+        if key not in UI_TEMPLATES or key == self._ui_template:
+            return
+        self._ui_template = key
+        self._template_var.set(UI_TEMPLATES[key])
+        save_app_config({"ui_template": key})
+        self._refresh_template_background()
+        self._draw()
+
+    def _refresh_template_background(self):
+        source = self._template_source.get(self._ui_template)
+        self._template_background_photo = None
+        if source is None:
+            return
+        target = source.resize((self.W, self.H), Image.Resampling.LANCZOS)
+        target = ImageEnhance.Brightness(target).enhance(0.52 if self._ui_template == "visor" else 0.60)
+        self._template_background_photo = ImageTk.PhotoImage(target, master=self.root)
+
     # ── Mute button ──────────────────────────────────────────────────────────
     def _build_mute_button(self):
         self._mute_canvas = tk.Canvas(self.root, width=126, height=36,
@@ -1400,6 +1458,7 @@ class JarvisUI:
 
     def _resize_surface(self, width: int, height: int):
         self._set_layout_metrics(width, height)
+        self._refresh_template_background()
         self.bg.configure(width=self.W, height=self.H)
         self.bg.place(x=0, y=0)
         self._place_layout_widgets()
@@ -3208,6 +3267,71 @@ class JarvisUI:
             c.create_oval(x+tile_w-14, y+9, x+tile_w-8, y+15,
                           fill=accent if self.status_blink else "#5D5141", outline="")
 
+    def _draw_visor_core(self, c):
+        """Óptica de visor: retícula de enfoque, barrido y señal de voz."""
+        cx, cy = self.FCX, self.FCY - 28
+        radius = min(168, max(95, (self.CENTER_X1 - self.CENTER_X0) * 0.24))
+        blue, pale, dim = "#36BFFF", "#BCEEFF", "#275B79"
+        for fraction, width, color in ((1.0, 2, dim), (0.82, 2, blue), (0.54, 1, pale)):
+            rr = radius * fraction
+            c.create_oval(cx-rr, cy-rr, cx+rr, cy+rr, outline=color, width=width)
+        for index in range(24):
+            angle = math.radians(index * 15 + self.tick * 0.14)
+            inner = radius * (0.89 if index % 3 else 0.83)
+            outer = radius * (1.02 if index % 3 else 1.09)
+            c.create_line(cx + math.cos(angle)*inner, cy + math.sin(angle)*inner,
+                          cx + math.cos(angle)*outer, cy + math.sin(angle)*outer,
+                          fill=pale if index % 3 == 0 else dim, width=2 if index % 3 == 0 else 1)
+        for ring, count, extent, speed in ((0.94, 6, 33, 0.48), (0.70, 4, 43, -0.76)):
+            rr = radius * ring
+            for index in range(count):
+                c.create_arc(cx-rr, cy-rr, cx+rr, cy+rr,
+                             start=self.tick*speed + index*360/count, extent=extent,
+                             style="arc", outline=blue, width=4)
+        sweep = math.radians(self.tick * 0.7)
+        c.create_line(cx, cy, cx+math.cos(sweep)*radius*0.82,
+                      cy-math.sin(sweep)*radius*0.82, fill=blue, width=2)
+        c.create_line(cx-radius*0.37, cy, cx+radius*0.37, cy, fill=dim)
+        c.create_line(cx, cy-radius*0.37, cx, cy+radius*0.37, fill=dim)
+        c.create_oval(cx-7, cy-7, cx+7, cy+7, outline=pale, width=2)
+        c.create_text(cx, cy+radius+27, text="VISOR / ANÁLISIS DE ENTORNO",
+                      fill=pale, font=font_display(10))
+        c.create_text(cx, cy+radius+45,
+                      text=f"GEMINI LIVE  ·  {'VOZ ACTIVA' if self.speaking else 'ENLACE DE VOZ'}",
+                      fill=blue, font=font_body_bold(9))
+
+    def _draw_tactical_core(self, c):
+        """Plano táctico con capas hexagonales y marcador de barrido."""
+        cx, cy = self.FCX, self.FCY - 28
+        radius = min(166, max(95, (self.CENTER_X1 - self.CENTER_X0) * 0.23))
+        gold, red, dim = "#FFBA58", "#EF5C45", "#6D3A29"
+        for scale, color, width in ((1.16, dim, 2), (0.94, gold, 3), (0.62, red, 2)):
+            rr = radius * scale
+            points = [coord for index in range(6)
+                      for coord in (cx + math.cos(math.radians(index*60-30))*rr,
+                                    cy + math.sin(math.radians(index*60-30))*rr)]
+            c.create_polygon(*points, fill="", outline=color, width=width)
+        for index in range(6):
+            angle = math.radians(index*60-30)
+            c.create_line(cx+math.cos(angle)*radius*0.65, cy+math.sin(angle)*radius*0.65,
+                          cx+math.cos(angle)*radius*1.12, cy+math.sin(angle)*radius*1.12,
+                          fill=gold, width=2)
+        scan_y = cy-radius*0.75 + (self.tick*1.2) % (radius*1.5)
+        c.create_line(cx-radius*0.76, scan_y, cx+radius*0.76, scan_y,
+                      fill=red, width=2)
+        for index in range(12):
+            a = math.radians(index*30 + self.tick*0.22)
+            x = cx+math.cos(a)*radius*0.78
+            y = cy+math.sin(a)*radius*0.78
+            c.create_oval(x-2, y-2, x+2, y+2, fill=gold, outline="")
+        c.create_text(cx, cy-9, text="J.A.R.V.I.S", fill="#FFE5B4",
+                      font=font_display(19))
+        c.create_text(cx, cy+18, text="MATRIZ DE VIGILANCIA", fill=gold,
+                      font=font_display(9))
+        c.create_text(cx, cy+radius+34,
+                      text=f"GEMINI LIVE   /   CPU {self._stats['cpu']:.0f}%   /   MEM {self._stats['ram']:.0f}%",
+                      fill="#FFD399", font=font_body_bold(9))
+
     def _draw(self):
         c  = self.bg
         W  = self.W
@@ -3215,12 +3339,16 @@ class JarvisUI:
         t  = self.tick
         c.delete("all")
 
+        if self._template_background_photo is not None:
+            c.create_image(0, 0, image=self._template_background_photo, anchor="nw")
+
         # ── Arka plan ────────────────────────────────────────────────────────
         # Nokta ızgarası — çok ince
-        step = 48
-        for x in range(0, W, step):
-            for y in range(0, H, step):
-                c.create_rectangle(x, y, x+1, y+1, fill=C_DIMMER, outline="")
+        if self._ui_template == "sukima":
+            step = 48
+            for x in range(0, W, step):
+                for y in range(0, H, step):
+                    c.create_rectangle(x, y, x+1, y+1, fill=C_DIMMER, outline="")
 
         # Tarama çizgisi (yavaş, çok soluk)
         scan_y = (t * 0.7) % (H + 60) - 30
@@ -3250,9 +3378,14 @@ class JarvisUI:
         self._draw_right_panel(c)
 
         # ── Orb ──────────────────────────────────────────────────────────────
-        self._draw_radar_frame(c)
-        self._draw_orb(c)
-        self._draw_center_sensor_stack(c)
+        if self._ui_template == "sukima":
+            self._draw_radar_frame(c)
+            self._draw_orb(c)
+            self._draw_center_sensor_stack(c)
+        elif self._ui_template == "visor":
+            self._draw_visor_core(c)
+        else:
+            self._draw_tactical_core(c)
         self._draw_hud_modules(c)
 
         state_label = self._state_badge_text("PAUSED" if self.paused else self._jarvis_state)
@@ -3296,9 +3429,9 @@ class JarvisUI:
         c.create_text(brand_x+10, H-16, fill="#E7B66B", font=font_display(7),
                       text="SUKIMA LABS  /  JARVIS", anchor="w")
         c.create_text(self.FCX, H-16, fill="#A79B87", font=font_body(7),
-                      text=f"GEMINI LIVE  /  {len(self._flight_clips):02d} ESCENAS  /  INTERFAZ SUKIMA LABS")
+                       text=f"GEMINI LIVE  /  {len(self._flight_clips):02d} ESCENAS  /  {UI_TEMPLATES[self._ui_template]}")
         c.create_text(W-18, H-16, fill="#B3A68F", font=font_body(8),
-                      text="[F4] AUDIO  [F5] PAUSA  [F9] MINI  [F11] PANTALLA  [ESC] SALIR", anchor="e")
+                       text="[F4] AUDIO  [F5] PAUSA  [F6] INTERFAZ  [F9] MINI  [F11] PANTALLA  [ESC] SALIR", anchor="e")
         self._draw_flight_cameo(c)
 
     def wait_for_api_key(self):

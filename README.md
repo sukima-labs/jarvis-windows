@@ -15,6 +15,10 @@ Asistente de escritorio en español, mantenido por **Sukima Labs**. Usa Gemini c
 
 El repositorio incluye las animaciones de Iron Man bajo Lottie Simple License y sus creditos en `assets/ATTRIBUTIONS.md`. Los GIF de peliculas se conservan localmente. El audio de inicio aportado por el usuario esta en `assets/back_in_black_intro.mpeg` para este repositorio privado.
 
+## Interfaces
+
+En **Configuración → Interfaz** puedes elegir entre **Mando Sukima**, **Visor azul** y **Mapa táctico**. `F6` cambia al siguiente diseño. La selección se conserva al reiniciar. Los fondos del visor y del mapa táctico son imágenes originales creadas para este proyecto; cada modo tiene una animación central diferente y conserva la conversación, el estado de Gemini y la vigilancia visual.
+
 ## Marca
 
 El isotipo maestro es `isotipo_color.svg`; los iconos de Windows están en `assets/`.
