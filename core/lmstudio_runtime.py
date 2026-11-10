@@ -192,10 +192,15 @@ class JarvisLocal:
         self.ui.on_text_command = self._on_text_command
         self.ui.on_pause_toggle = self._on_pause_toggle
         self.ui.on_effects_state_change = lambda _e: None
+        self.ui.on_vigilance_alert = self._on_vigilance_alert
 
     # ── UI callbacks ─────────────────────────────────────────────────────────
     def _on_pause_toggle(self, paused: bool):
         self._paused = paused
+
+    def _on_vigilance_alert(self, message: str):
+        if not self._paused and not self._is_speaking and not self.ui.muted:
+            self._speak_blocking("Señor, simulación del UCM: " + message)
 
     def _on_text_command(self, text: str):
         if self._paused or not text.strip():

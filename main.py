@@ -505,6 +505,7 @@ class JarvisLive:
         self.ui.on_text_command  = self._on_text_command
         self.ui.on_pause_toggle  = self._on_pause_toggle
         self.ui.on_effects_state_change = self._on_effects_state_change
+        self.ui.on_vigilance_alert = self._on_vigilance_alert
         self._paused             = False
 
     def _on_pause_toggle(self, paused: bool):
@@ -512,6 +513,19 @@ class JarvisLive:
 
     def _on_effects_state_change(self, enabled: bool):
         pass
+
+    def _on_vigilance_alert(self, message: str):
+        if self._paused or not self._loop or not self.session or self._is_speaking:
+            return
+        prompt = (
+            "Avisa con una sola frase breve en español: Señor, simulación del UCM: "
+            + message + " No uses herramientas ni añadas información externa."
+        )
+        asyncio.run_coroutine_threadsafe(
+            self.session.send_client_content(
+                turns={"role": "user", "parts": [{"text": prompt}]}, turn_complete=True,
+            ), self._loop,
+        )
 
     async def _send_startup_greeting(self):
         hour = datetime.datetime.now().hour

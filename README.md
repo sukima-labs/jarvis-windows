@@ -21,6 +21,8 @@ En **Configuración → Interfaz** puedes elegir entre **Mando Sukima**, **Visor
 
 El botón **INTERFAZ** de la cabecera también cambia el diseño con un clic. Para ampliar las secuencias locales de vigilancia con Capitan América, Thor, Black Panther, Guardianes de la Galaxia, Capitana Marvel, Ant-Man, Doctor Strange y Spider-Man, ejecuta `venv\Scripts\python.exe scripts\install_vigilancia.py`. Los GIF proceden de las páginas oficiales indicadas en `assets/vigilancia_sources.json` y se mantienen fuera de Git.
 
+La vigilancia reproduce GIF animados de forma continua y, cada cierto tiempo, muestra un aviso ficticio del UCM en pantalla. Si Jarvis está conectado y lleva un rato sin conversación, también lo comenta en voz. Estos avisos son una simulación narrativa basada en personajes y mundos de las películas, no noticias ni detecciones reales. El panel **Centro de avisos** muestra el último suceso y la cuenta regresiva del siguiente; la telemetría del equipo permanece en su panel independiente.
+
 ## Marca
 
 El isotipo maestro es `isotipo_color.svg`; los iconos de Windows están en `assets/`.

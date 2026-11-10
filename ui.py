@@ -17,6 +17,7 @@ from app_config import (
 )
 from actions.weather import get_current_city, get_location_region, get_weather_summary
 from actions.health import get_health_data, get_health_card_lines
+from ucm_events import EVENTS as UCM_EVENTS
 
 BASE_DIR = Path(__file__).resolve().parent
 
@@ -634,7 +635,7 @@ class JarvisUI:
         self._startup_song_track = None
         self._flight_cameo_started = 0.0
         self._flight_cameo_duration = 10.0
-        self._flight_cameo_next = time.monotonic() + 1.5
+        self._flight_cameo_next = time.monotonic()
         self._flight_clips = []
         clip_specs = (
             ("iron_man_flight.gif", "IRON MAN / VUELO", "VIGILANCIA JARVIS / MK III"),
@@ -667,12 +668,18 @@ class JarvisUI:
                     canvas = Image.new("RGB", (218, 78), "#10131A")
                     canvas.paste(source, ((218-source.width)//2, (78-source.height)//2))
                     frames.append(ImageTk.PhotoImage(canvas, master=self.root))
-                if frames:
+                if len(frames) > 1:
                     self._flight_clips.append({"title": title, "caption": caption, "frames": frames, "frame_ms": frame_ms})
             except Exception:
                 continue
         self._flight_clip_index = -1
         self._flight_clip = None
+        self._ucm_alert = None
+        self._ucm_alert_until = 0.0
+        self._ucm_last_alert_index = -1
+        self._ucm_alert_count = 0
+        self._ucm_next_alert = time.monotonic() + random.uniform(75.0, 110.0)
+        self._last_user_activity = time.monotonic()
         self._settings_geometry = {
             "btn_x": 14,
             "btn_y": 12,
@@ -694,6 +701,7 @@ class JarvisUI:
         self.on_stop_command = None
         self.on_voice_change = None
         self.on_effects_state_change = None
+        self.on_vigilance_alert = None
 
         # ── Voice ────────────────────────────────────────────────────────────
         self._current_voice = self._load_voice()
@@ -2179,6 +2187,21 @@ class JarvisUI:
     def mark_user_activity(self, active: bool = True):
         self.user_speaking = active
         self._user_speaking_until = time.time() + (0.9 if active else 0.0)
+        if active:
+            self._last_user_activity = time.monotonic()
+
+    def _emit_ucm_alert(self, now_mono: float):
+        choices = [index for index in range(len(UCM_EVENTS)) if index != self._ucm_last_alert_index]
+        index = random.choice(choices)
+        self._ucm_last_alert_index = index
+        self._ucm_alert_count += 1
+        self._ucm_alert = UCM_EVENTS[index]
+        self._ucm_alert_until = now_mono + 18.0
+        self._ucm_next_alert = now_mono + random.uniform(130.0, 200.0)
+        title, message, film = self._ucm_alert
+        self.write_log(f"UCM · ficción ({film}): {message}")
+        if self.on_vigilance_alert and not self.muted and now_mono - self._last_user_activity >= 35.0:
+            threading.Thread(target=self.on_vigilance_alert, args=(message,), daemon=True).start()
 
     def get_effects_volume(self) -> float:
         return self.sound.get_volume()
@@ -2300,6 +2323,7 @@ class JarvisUI:
         self.tick += 1
         t   = self.tick
         now = time.time()
+        mono_now = time.monotonic()
 
         if self.user_speaking and now > self._user_speaking_until:
             self.user_speaking = False
@@ -2359,11 +2383,15 @@ class JarvisUI:
         if t % 38 == 0:
             self.status_blink = not self.status_blink
 
-        if self._flight_clips and now >= self._flight_cameo_next:
+        if self._flight_clips and mono_now >= self._flight_cameo_next:
             self._flight_clip_index = (self._flight_clip_index + 1) % len(self._flight_clips)
             self._flight_clip = self._flight_clips[self._flight_clip_index]
-            self._flight_cameo_started = time.monotonic()
-            self._flight_cameo_next = now + self._flight_cameo_duration + 0.8
+            self._flight_cameo_started = mono_now
+            self._flight_cameo_next = mono_now + self._flight_cameo_duration
+
+        if (mono_now >= self._ucm_next_alert and not self.paused and not self.user_speaking
+                and not self.speaking and self._jarvis_state == "LISTENING"):
+            self._emit_ucm_alert(mono_now)
 
         self._draw()
         self.root.after(33, self._animate)
@@ -2585,7 +2613,7 @@ class JarvisUI:
             ("time", 0.17, "HORA LOCAL", C_GOLD),
             ("weather", 0.20, f"CLIMA / {self._weather_card['city']}", C_BLUE),
             ("system", 0.43, "TELEMETRIA DEL EQUIPO", C_PRI),
-            ("health", 0.20, "ESTADO DEL SISTEMA", C_GREEN),
+            ("health", 0.20, "CENTRO DE AVISOS", C_GREEN),
         ]
         any_focus_active = bool(self._panel_focus) and (self._panel_focus_until > time.time())
         weights = []
@@ -2695,33 +2723,20 @@ class JarvisUI:
                                 section_bw, graph_h, self._cpu_hist)
 
             elif section == "health":
-                items = (("CPU", "cpu"), ("MEMORIA", "ram"),
-                         ("DISCO", "disk"), ("BATERIA", "battery"))
-                gap_x, gap_y = 8, 6
-                tile_w = (section_bw-gap_x)/2
-                tile_h = 31
-                base_y = current_y + 39
-                for index, (label, key) in enumerate(items):
-                    val = max(0.0, min(100.0, float(self._stats.get(key, 0.0))))
-                    if key == "battery":
-                        color = C_RED if val < 20 else C_GREEN
-                    else:
-                        color = C_RED if val >= 85 else C_ORG2 if val >= 65 else C_GREEN
-                    row, column = divmod(index, 2)
-                    tile_x = section_x+section_pad+column*(tile_w+gap_x)
-                    tile_y = base_y+row*(tile_h+gap_y)
-                    c.create_rectangle(tile_x, tile_y, tile_x+tile_w, tile_y+tile_h,
-                                       fill="#201F27", outline="#39343D", width=1)
-                    c.create_text(tile_x+7, tile_y+9, text=label, fill=muted_label,
-                                  font=font_display(7), anchor="w")
-                    c.create_text(tile_x+tile_w-7, tile_y+9, text=f"{val:.0f}%", fill=color,
-                                  font=font_body_bold(9), anchor="e")
-                    self._bar(c, tile_x+7, tile_y+19, tile_w-14, 5, val, color)
-                uptime = max(0, int(time.time()-self._started_at))
-                mins, secs = divmod(uptime, 60)
-                c.create_text(section_x+section_pad, current_y+116,
-                              text=f"JARVIS ACTIVO  {mins:02d}:{secs:02d}  /  {self._stats.get('processes', 0)} PROCESOS",
-                              fill=muted_text, font=font_body(7), anchor="w")
+                alert = self._ucm_alert
+                remaining = max(0, int(self._ucm_next_alert - time.monotonic()))
+                c.create_text(section_x+section_pad, current_y+43,
+                              text="VIGILANCIA UCM  /  SIMULACIÓN",
+                              fill=muted_green, font=font_body_bold(8), anchor="w")
+                c.create_text(section_x+section_pad, current_y+63,
+                              text=alert[0] if alert else "CANAL EN ESPERA",
+                              fill=muted_primary, font=font_display(9), anchor="w")
+                c.create_text(section_x+section_pad, current_y+83,
+                              text=f"ÚLTIMO: {alert[2] if alert else 'SIN AVISOS'}",
+                              fill=muted_text, font=font_body(8), anchor="w")
+                c.create_text(section_x+section_pad, current_y+104,
+                              text=f"PRÓXIMO AVISO ~{remaining//60:02d}:{remaining%60:02d}   /   {self._ucm_alert_count} EMITIDOS",
+                              fill=muted_label, font=font_body(8), anchor="w")
 
             current_y += ph + gap
 
@@ -3225,31 +3240,23 @@ class JarvisUI:
 
         clip = self._flight_clip or self._flight_clips[0]
         elapsed = max(0.0, time.monotonic()-self._flight_cameo_started) if self._flight_cameo_started else 0.0
-        active = bool(self._flight_cameo_started and elapsed < self._flight_cameo_duration)
         frames = clip["frames"]
-        frame_index = int(elapsed*1000/clip["frame_ms"]) % len(frames) if active else 0
+        frame_index = int(elapsed*1000/clip["frame_ms"]) % len(frames)
         c.create_rectangle(video_x, panel_y+5, video_x+video_w, panel_y+panel_h-5,
                            fill="#10131A", outline="#836A46", width=1)
         c.create_text(video_x+8, panel_y+13,
-                      text=clip["title"] if active else "VIGILANCIA / EN ESPERA",
-                      fill="#F0D7A7" if active else "#B3A68F",
+                      text=clip["title"], fill="#F0D7A7",
                       font=font_display(7), anchor="w")
         image_x = video_x+(video_w-218)//2
         c.create_image(image_x, panel_y+19, image=frames[frame_index], anchor="nw")
-        if active:
-            caption = clip["caption"]
-            progress = min(1.0, elapsed/self._flight_cameo_duration)
-        else:
-            caption = "FEED DE VIGILANCIA ACTIVO"
-            progress = 0.0
-        c.create_text(video_x+8, panel_y+101, text=caption,
+        progress = min(1.0, elapsed/self._flight_cameo_duration)
+        c.create_text(video_x+8, panel_y+101, text=clip["caption"],
                       fill="#B3A68F", font=font_body(7), anchor="w")
         c.create_rectangle(video_x+video_w-40, panel_y+103,
                            video_x+video_w-8, panel_y+105, fill="#39343D", outline="")
-        if active:
-            c.create_rectangle(video_x+video_w-40, panel_y+103,
-                               video_x+video_w-40+32*progress, panel_y+105,
-                               fill=C_PRI, outline="")
+        c.create_rectangle(video_x+video_w-40, panel_y+103,
+                           video_x+video_w-40+32*progress, panel_y+105,
+                           fill=C_PRI, outline="")
 
         right_x = video_x+video_w+20
         status = self._state_badge_text("PAUSED" if self.paused else self._jarvis_state).upper()
@@ -3262,8 +3269,26 @@ class JarvisUI:
         c.create_text(right_x, panel_y+57, text=f"GEMINI  /  {self._current_voice.upper()}",
                       fill="#B3A68F", font=font_body(8), anchor="w")
         c.create_text(right_x, panel_y+78,
-                      text=f"CPU {self._stats['cpu']:.0f}%   MEM {self._stats['ram']:.0f}%",
+                      text=f"AVISOS UCM  /  {self._ucm_alert_count:02d}",
                       fill="#A79B87", font=font_body(8), anchor="w")
+
+    def _draw_ucm_notification(self, c):
+        if not self._ucm_alert or time.monotonic() >= self._ucm_alert_until:
+            return
+        x = self.CENTER_X0 + 24
+        y = HDR_H + 59
+        width = self.CENTER_X1 - self.CENTER_X0 - 48
+        if width < 240:
+            return
+        title, message, film = self._ucm_alert
+        c.create_rectangle(x, y, x+width, y+83, fill="#21191D", outline="#EE725D", width=2)
+        c.create_line(x+2, y+2, x+width-2, y+2, fill="#FFC078", width=2)
+        c.create_text(x+14, y+15, text=f"AVISO UCM · FICCIÓN  /  {film.upper()}",
+                      fill="#FFB67C", font=font_display(8), anchor="w")
+        c.create_text(x+14, y+37, text=title, fill="#FFF0D2",
+                      font=font_display(10), anchor="w")
+        c.create_text(x+14, y+53, text=message, fill="#F1D6C5",
+                      font=font_body(9), width=width-28, anchor="nw")
 
     def _draw_hud_modules(self, c):
         """Tarjetas de estado del backend y audio, siempre verificables."""
@@ -3414,6 +3439,7 @@ class JarvisUI:
         else:
             self._draw_tactical_core(c)
         self._draw_hud_modules(c)
+        self._draw_ucm_notification(c)
 
         state_label = self._state_badge_text("PAUSED" if self.paused else self._jarvis_state)
         state_col = self._state_color(state_label)
