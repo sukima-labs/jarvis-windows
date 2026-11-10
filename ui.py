@@ -31,6 +31,7 @@ UI_TEMPLATES = {
     "sukima": "MANDO SUKIMA",
     "visor": "VISOR AZUL",
     "tactico": "MAPA TÁCTICO",
+    "armadura": "ARMADURA / HUD",
 }
 SPANISH_MONTHS = (
     "enero", "febrero", "marzo", "abril", "mayo", "junio",
@@ -596,6 +597,12 @@ class JarvisUI:
             except (OSError, ValueError):
                 pass
         self._template_background_photo = None
+        try:
+            self._armor_source = Image.open(assets_dir / "ui_armor.png").convert("RGBA")
+        except (OSError, ValueError):
+            self._armor_source = None
+        self._armor_photo = None
+        self._armor_size = (0, 0)
         self._set_layout_metrics(self.W, self.H)
 
         # ── State ────────────────────────────────────────────────────────────
@@ -659,9 +666,12 @@ class JarvisUI:
         for filename, title, caption in clip_specs:
             try:
                 animation = Image.open(assets_dir / filename)
-                frame_ms = max(35, int(animation.info.get("duration", 50)))
+                frame_step = max(1, math.ceil(getattr(animation, "n_frames", 1) / 48))
+                frame_ms = max(35, int(animation.info.get("duration", 50)) * frame_step)
                 frames = []
-                for frame in ImageSequence.Iterator(animation):
+                for frame_index, frame in enumerate(ImageSequence.Iterator(animation)):
+                    if frame_index % frame_step:
+                        continue
                     source = frame.convert("RGB")
                     if filename == "iron_man_core_source.gif":
                         w, h = source.size
@@ -768,6 +778,7 @@ class JarvisUI:
                             bg=C_BG, highlightthickness=0)
         self.bg.place(x=0, y=0)
         self.bg.tag_bind("weather_city", "<Button-1>", self._edit_weather_location)
+        self.bg.tag_bind("next_vigilancia", "<Button-1>", self._next_flight_clip)
 
         # ── Log ──────────────────────────────────────────────────────────────
         self.log_frame = tk.Frame(self.root, bg=C_PANEL,
@@ -1392,11 +1403,23 @@ class JarvisUI:
     def _refresh_template_background(self):
         source = self._template_source.get(self._ui_template)
         self._template_background_photo = None
-        if source is None:
-            return
-        target = source.resize((self.W, self.H), Image.Resampling.LANCZOS)
-        target = ImageEnhance.Brightness(target).enhance(0.52 if self._ui_template == "visor" else 0.60)
-        self._template_background_photo = ImageTk.PhotoImage(target, master=self.root)
+        self._armor_photo = None
+        if source is not None:
+            target = source.resize((self.W, self.H), Image.Resampling.LANCZOS)
+            target = ImageEnhance.Brightness(target).enhance(0.52 if self._ui_template == "visor" else 0.60)
+            self._template_background_photo = ImageTk.PhotoImage(target, master=self.root)
+        if self._ui_template == "armadura" and self._armor_source is not None:
+            max_w = int((self.CENTER_X1 - self.CENTER_X0) * 0.94)
+            max_h = int((self.CTRL_Y - HDR_H) * 0.88)
+            width = min(max_w, int(max_h * self._armor_source.width / self._armor_source.height))
+            height = int(width * self._armor_source.height / self._armor_source.width)
+            self._armor_size = (width, height)
+            armor = self._armor_source.resize((width, height), Image.Resampling.LANCZOS)
+            self._armor_photo = ImageTk.PhotoImage(armor, master=self.root)
+        if hasattr(self, "log_frame"):
+            accent = "#4BCED8" if self._ui_template == "armadura" else C_MID
+            self.log_frame.configure(highlightbackground=accent)
+            self.log_text.tag_config("ai", foreground=accent if self._ui_template == "armadura" else C_PRI)
 
     # ── Mute button ──────────────────────────────────────────────────────────
     def _build_mute_button(self):
@@ -2768,7 +2791,8 @@ class JarvisUI:
         pad = 10
 
         c.create_rectangle(x0, y0, x0+pw, y0+ph, fill=C_PANEL, outline="")
-        self._bracket(c, x0, y0, pw, ph, col=C_MID)
+        accent = "#4BCED8" if self._ui_template == "armadura" else C_MID
+        self._bracket(c, x0, y0, pw, ph, col=accent)
 
         if self.paused:
             sc, st = C_MID, "EN PAUSA"
@@ -2776,7 +2800,7 @@ class JarvisUI:
             sc = self._state_color(self._jarvis_state)
             st = self._state_badge_text(self._jarvis_state)
 
-        c.create_text(x0+14, y0+16, text="CONVERSACIÓN", fill=C_PRI,
+        c.create_text(x0+14, y0+16, text="CONVERSACIÓN", fill=accent if self._ui_template == "armadura" else C_PRI,
                       font=font_display(11), anchor="w")
         c.create_text(x0+pw-pad, y0+16, text=st, fill=sc,
                       font=font_body_bold(10), anchor="e")
@@ -3225,6 +3249,14 @@ class JarvisUI:
         c.create_text(x+26, net_y+30, text=backend, fill="#C7B99F",
                       font=font_body_bold(8), anchor="w")
 
+    def _next_flight_clip(self, event=None):
+        if not self._flight_clips:
+            return
+        self._flight_clip_index = (self._flight_clip_index + 1) % len(self._flight_clips)
+        self._flight_clip = self._flight_clips[self._flight_clip_index]
+        self._flight_cameo_started = time.monotonic()
+        self._flight_cameo_next = self._flight_cameo_started + self._flight_cameo_duration
+
     def _draw_flight_cameo(self, c):
         """Bandeja inferior futurista con archivo visual y estado del sistema."""
         if not self._flight_clips:
@@ -3233,9 +3265,12 @@ class JarvisUI:
         panel_w = self.CENTER_X1 - self.CENTER_X0 - 20
         panel_h = 108
         panel_y = self.H - FOOTER_H - panel_h - 4
+        accent = "#4BCED8" if self._ui_template == "armadura" else "#E7B66B"
+        border = "#2D5863" if self._ui_template == "armadura" else "#836A46"
         c.create_rectangle(panel_x, panel_y, panel_x+panel_w, panel_y+panel_h,
-                           fill="#15171F", outline="#51483F", width=1)
-        self._bracket(c, panel_x, panel_y, panel_w, panel_h, col="#836A46", bl=9)
+                           fill="#101920" if self._ui_template == "armadura" else "#15171F",
+                           outline=border, width=1)
+        self._bracket(c, panel_x, panel_y, panel_w, panel_h, col=border, bl=9)
         c.create_line(panel_x+154, panel_y+8, panel_x+154, panel_y+panel_h-8,
                       fill="#39343D", width=1)
         video_w = min(248, panel_w-330)
@@ -3245,26 +3280,30 @@ class JarvisUI:
         c.create_line(video_x+video_w+10, panel_y+8, video_x+video_w+10, panel_y+panel_h-8,
                       fill="#39343D", width=1)
 
-        c.create_text(panel_x+12, panel_y+18, text="VIGILANCIA DE JARVIS", fill="#E7B66B",
+        c.create_text(panel_x+12, panel_y+18, text="VIGILANCIA DE JARVIS", fill=accent,
                       font=font_display(8), anchor="w")
         c.create_text(panel_x+12, panel_y+39, text="ARCHIVO / UCM", fill="#EFE9DD",
                       font=font_body_bold(8), anchor="w")
         c.create_text(panel_x+12, panel_y+58, text=f"{len(self._flight_clips):02d} SECUENCIAS",
                       fill="#B3A68F", font=font_display(8), anchor="w")
         c.create_text(panel_x+12, panel_y+77, text="FEED DE VIGILANCIA",
-                      fill="#836A46", font=font_body(7), anchor="w")
+                      fill=border, font=font_body(7), anchor="w")
+        c.create_text(panel_x+12, panel_y+97, text="SIGUIENTE  >", fill=accent,
+                      font=font_body_bold(8), anchor="w", tags=("next_vigilancia",))
 
         clip = self._flight_clip or self._flight_clips[0]
         elapsed = max(0.0, time.monotonic()-self._flight_cameo_started) if self._flight_cameo_started else 0.0
         frames = clip["frames"]
         frame_index = int(elapsed*1000/clip["frame_ms"]) % len(frames)
         c.create_rectangle(video_x, panel_y+5, video_x+video_w, panel_y+panel_h-5,
-                           fill="#10131A", outline="#836A46", width=1)
+                           fill="#10131A", outline=border, width=1,
+                           tags=("next_vigilancia",))
         c.create_text(video_x+8, panel_y+13,
                       text=clip["title"], fill="#F0D7A7",
                       font=font_display(7), anchor="w")
         image_x = video_x+(video_w-218)//2
-        c.create_image(image_x, panel_y+19, image=frames[frame_index], anchor="nw")
+        c.create_image(image_x, panel_y+19, image=frames[frame_index], anchor="nw",
+                       tags=("next_vigilancia",))
         progress = min(1.0, elapsed/self._flight_cameo_duration)
         c.create_text(video_x+8, panel_y+101, text=clip["caption"],
                       fill="#B3A68F", font=font_body(7), anchor="w")
@@ -3272,11 +3311,11 @@ class JarvisUI:
                            video_x+video_w-8, panel_y+105, fill="#39343D", outline="")
         c.create_rectangle(video_x+video_w-40, panel_y+103,
                            video_x+video_w-40+32*progress, panel_y+105,
-                           fill=C_PRI, outline="")
+                           fill=accent, outline="")
 
         right_x = video_x+video_w+20
         status = self._state_badge_text("PAUSED" if self.paused else self._jarvis_state).upper()
-        c.create_text(right_x, panel_y+18, text="SISTEMA / ESTADO", fill="#E7B66B",
+        c.create_text(right_x, panel_y+18, text="SISTEMA / ESTADO", fill=accent,
                       font=font_display(8), anchor="w")
         c.create_oval(right_x, panel_y+31, right_x+7, panel_y+38,
                       fill=self._state_color("PAUSED" if self.paused else self._jarvis_state), outline="")
@@ -3324,6 +3363,9 @@ class JarvisUI:
             ("MICROFONO", "16 kHz  \u00b7  " + microphone, C_GREEN if not self.muted else C_ORG),
             ("VOZ DE JARVIS", f"{self._current_voice.upper()}  \u00b7  24 kHz", C_BLUE),
         ]
+        if self._ui_template == "armadura":
+            modules = [(title, value, "#4BCED8" if index != 1 else "#83D9A3")
+                       for index, (title, value, _) in enumerate(modules)]
         for index, (title, value, accent) in enumerate(modules):
             x = start_x + index * (tile_w + gap)
             c.create_rectangle(x, y, x+tile_w, y+h, fill="#1B1C24", outline="#39343D", width=1)
@@ -3334,6 +3376,84 @@ class JarvisUI:
                           font=font_body_bold(8 if tile_w < 170 else 9), anchor="w")
             c.create_oval(x+tile_w-14, y+9, x+tile_w-8, y+15,
                           fill=accent if self.status_blink else "#5D5141", outline="")
+
+    def _draw_armor_diagnostics(self, c):
+        """Panel de diagnóstico vertical inspirado en las referencias del usuario."""
+        x, y = 10, HDR_H + 10
+        width = self.LEFT_W - 18
+        height = self.H - FOOTER_H - y - 10
+        cyan, pale, dim = "#4BCED8", "#C8F5F6", "#2D5863"
+        c.create_rectangle(x, y, x+width, y+height, fill="#0B151C", outline=dim)
+        self._bracket(c, x, y, width, height, col=cyan, bl=16)
+        c.create_text(x+14, y+15, text="DIAGNÓSTICO / ARMADURA", fill=cyan,
+                      font=font_display(9), anchor="w")
+        c.create_line(x+14, y+30, x+width-14, y+30, fill=dim)
+        c.create_text(x+14, y+59, text=time.strftime("%H:%M"), fill=pale,
+                      font=font_display(27), anchor="w")
+        c.create_text(x+width-14, y+50, text=self._weather_card["primary"], fill=cyan,
+                      font=font_display(16), anchor="e")
+        c.create_text(x+14, y+83, text=self._weather_card["city"].upper(), fill="#88AEB7",
+                      font=font_body_bold(8), anchor="w")
+        c.create_line(x+14, y+98, x+width-14, y+98, fill=dim)
+        gauges = (("PROCESADOR", "cpu", cyan), ("MEMORIA", "ram", "#72A7EE"),
+                  ("ENERGÍA", "battery", "#EBA96E"))
+        for index, (label, key, color) in enumerate(gauges):
+            gy = y + 150 + index * 106
+            gx = x + 61
+            value = max(0, min(100, float(self._stats.get(key, 0))))
+            c.create_oval(gx-37, gy-37, gx+37, gy+37, outline=dim, width=5)
+            c.create_arc(gx-37, gy-37, gx+37, gy+37, start=90,
+                         extent=-max(1, 360 * value / 100), outline=color,
+                         style="arc", width=5)
+            c.create_arc(gx-43, gy-43, gx+43, gy+43,
+                         start=self.tick*0.35+index*90, extent=28,
+                         outline=pale, style="arc", width=2)
+            c.create_text(gx, gy, text=f"{value:.0f}", fill=pale,
+                          font=font_display(15))
+            c.create_text(x+112, gy-12, text=label, fill=color,
+                          font=font_display(9), anchor="w")
+            c.create_text(x+112, gy+13, text=f"{value:.0f}%  /  ACTUALIZANDO",
+                          fill="#91A9AF", font=font_body(8), anchor="w")
+        box_y = y + height - 123
+        c.create_line(x+14, box_y, x+width-14, box_y, fill=cyan, width=2)
+        c.create_text(x+14, box_y+18, text="CANAL DE VIGILANCIA / UCM", fill=cyan,
+                      font=font_display(8), anchor="w")
+        c.create_text(x+14, box_y+43,
+                      text=self._ucm_alert[0] if self._ucm_alert else "SIN AVISOS ACTIVOS",
+                      fill=pale, font=font_body_bold(9), anchor="w")
+        c.create_text(x+14, box_y+64, text=f"{len(self._flight_clips):02d} SECUENCIAS ANIMADAS",
+                      fill="#91A9AF", font=font_body(8), anchor="w")
+        c.create_text(x+14, box_y+86, text="GEMINI LIVE  /  ENLACE DE VOZ",
+                      fill="#91A9AF", font=font_body(8), anchor="w")
+
+    def _draw_armor_core(self, c):
+        """Busto dimensional con reactor, barrido y anillos animados."""
+        cx = self.FCX
+        top = HDR_H + 58
+        width, height = self._armor_size
+        cyan, pale, dim = "#37D8E8", "#C8FFFF", "#1A6170"
+        if not self._armor_photo or width < 1:
+            return
+        for rr in (height*0.42, height*0.53):
+            c.create_oval(cx-rr, top+height*0.48-rr, cx+rr, top+height*0.48+rr,
+                          outline=dim, width=1)
+        c.create_image(cx, top, image=self._armor_photo, anchor="n")
+        scan_y = top + (self.tick*1.8) % height
+        c.create_line(cx-width*0.47, scan_y, cx+width*0.47, scan_y,
+                      fill="#245F68", width=2)
+        core_y = top + height*0.745
+        core_r = max(24, width*0.078)
+        for fraction, stroke in ((1.45, 1), (1.12, 2)):
+            rr = core_r*fraction
+            c.create_oval(cx-rr, core_y-rr, cx+rr, core_y+rr,
+                          outline=dim if fraction > 1.2 else cyan, width=stroke)
+        for index in range(8):
+            rr = core_r*1.27
+            c.create_arc(cx-rr, core_y-rr, cx+rr, core_y+rr,
+                         start=self.tick*(0.8 if index%2 else -0.5)+index*45,
+                         extent=17, style="arc", outline=pale, width=3)
+        c.create_text(cx, top+16, text="PLATAFORMA DE ARMADURA  /  ESCANEO ACTIVO",
+                      fill=cyan, font=font_display(9))
 
     def _draw_visor_core(self, c):
         """Óptica de visor: retícula de enfoque, barrido y señal de voz."""
@@ -3417,6 +3537,11 @@ class JarvisUI:
             for x in range(0, W, step):
                 for y in range(0, H, step):
                     c.create_rectangle(x, y, x+1, y+1, fill=C_DIMMER, outline="")
+        elif self._ui_template == "armadura":
+            for x in range(self.CENTER_X0, self.CENTER_X1, 34):
+                c.create_line(x, HDR_H, x, self.CTRL_Y, fill="#10242B")
+            for y in range(HDR_H, self.CTRL_Y, 34):
+                c.create_line(self.CENTER_X0, y, self.CENTER_X1, y, fill="#10242B")
 
         # Tarama çizgisi (yavaş, çok soluk)
         scan_y = (t * 0.7) % (H + 60) - 30
@@ -3442,7 +3567,10 @@ class JarvisUI:
                       fill=C_DIM, width=1)
 
         # ── Yan paneller ──────────────────────────────────────────────────────
-        self._draw_left_panel(c)
+        if self._ui_template == "armadura":
+            self._draw_armor_diagnostics(c)
+        else:
+            self._draw_left_panel(c)
         self._draw_right_panel(c)
 
         # ── Orb ──────────────────────────────────────────────────────────────
@@ -3452,8 +3580,10 @@ class JarvisUI:
             self._draw_center_sensor_stack(c)
         elif self._ui_template == "visor":
             self._draw_visor_core(c)
-        else:
+        elif self._ui_template == "tactico":
             self._draw_tactical_core(c)
+        else:
+            self._draw_armor_core(c)
         self._draw_hud_modules(c)
         self._draw_ucm_notification(c)
 
@@ -3467,7 +3597,8 @@ class JarvisUI:
         # ── HEADER ───────────────────────────────────────────────────────────
         c.create_rectangle(0, 0, W, HDR_H, fill=C_BG, outline="")
         # Alt çizgi — teal parlak
-        c.create_line(0, HDR_H, W, HDR_H, fill=C_MID, width=1)
+        theme_accent = "#4BCED8" if self._ui_template == "armadura" else C_MID
+        c.create_line(0, HDR_H, W, HDR_H, fill=theme_accent, width=1)
         for i in range(3):
             a = 60 - i * 18
             c.create_line(0, HDR_H-1-i, W, HDR_H-1-i,
@@ -3475,9 +3606,10 @@ class JarvisUI:
 
         # Büyük başlık
         draw_text_glow(c, W//2+18, 24, text=SYSTEM_NAME,
-                       fill=C_PRI, glow_color=C_MID, font=font_display(26))
+                       fill="#C8F5F6" if self._ui_template == "armadura" else C_PRI,
+                       glow_color=theme_accent, font=font_display(26))
         c.create_text(W//2+18, 52, text="ASISTENTE EN TIEMPO REAL / SUKIMA LABS",
-                      fill=C_MID, font=font_body(10))
+                       fill=theme_accent, font=font_body(10))
         if self._brand_icon_photo:
             c.create_image(W//2-160, 35, image=self._brand_icon_photo, anchor="center")
 

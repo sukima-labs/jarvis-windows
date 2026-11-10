@@ -12,6 +12,8 @@ import os
 import re
 import sys
 import time
+import unicodedata
+from difflib import SequenceMatcher
 from pathlib import Path
 
 import pyaudio  # type: ignore[reportMissingModuleSource]
@@ -499,6 +501,8 @@ class JarvisLive:
         self._is_speaking   = False
         self._speaking_lock = threading.Lock()
         self._mic_gate_until = 0.0
+        self._recent_assistant_transcript = ""
+        self._last_assistant_turn_at = 0.0
         self._startup_greeting_sent = False
         self._startup_greeting_interrupted = False
         self._startup_greeting_audio_received = False
@@ -932,6 +936,23 @@ class JarvisLive:
         with self._speaking_lock:
             return self._is_speaking or time.monotonic() < self._mic_gate_until
 
+    @staticmethod
+    def _normalized_speech(text: str) -> str:
+        ascii_text = "".join(ch for ch in unicodedata.normalize("NFKD", text.casefold())
+                             if not unicodedata.combining(ch))
+        return " ".join(re.sub(r"[^\w\s]", " ", ascii_text).split())
+
+    def _is_echo_transcript(self, text: str) -> bool:
+        if time.monotonic() - self._last_assistant_turn_at > 8.0:
+            return False
+        heard = self._normalized_speech(text)
+        spoken = self._normalized_speech(self._recent_assistant_transcript)
+        if len(heard) < 10 or not spoken:
+            return False
+        if (heard in spoken or spoken in heard) and min(len(heard), len(spoken)) / max(len(heard), len(spoken)) > 0.35:
+            return True
+        return SequenceMatcher(None, heard, spoken).ratio() >= 0.82
+
     async def _listen_audio(self):
         print("[JARVIS] 🎤 Mikrofon başladı")
         stream = await asyncio.to_thread(
@@ -957,10 +978,11 @@ class JarvisLive:
         out_buf, in_buf = [], []
         output_noise = False
         output_noise_samples = []
+        echo_turn = False
         try:
             while True:
                 async for response in self.session.receive():
-                    if response.data:
+                    if response.data and not echo_turn:
                         with self._speaking_lock:
                             self._mic_gate_until = max(self._mic_gate_until, time.monotonic() + 0.9)
                         for offset in range(0, len(response.data), OUTPUT_FRAME_BYTES):
@@ -992,15 +1014,34 @@ class JarvisLive:
                                         output_noise_samples.append(raw_txt)
                                 if txt:
                                     out_buf.append(txt)
+                                    self._recent_assistant_transcript = " ".join(out_buf)
+                                    self._last_assistant_turn_at = time.monotonic()
 
                         if sc.input_transcription and sc.input_transcription.text:
                             txt = sc.input_transcription.text.strip()
                             if txt:
-                                in_buf.append(txt)
-                                self.ui.mark_user_activity(True)
+                                if self._is_echo_transcript(txt):
+                                    echo_turn = True
+                                    while not self.audio_in_queue.empty():
+                                        try:
+                                            self.audio_in_queue.get_nowait()
+                                        except asyncio.QueueEmpty:
+                                            break
+                                    self.audio_in_queue.put_nowait(None)
+                                elif not echo_turn:
+                                    in_buf.append(txt)
+                                    self.ui.mark_user_activity(True)
 
                         if sc.turn_complete:
                             self.audio_in_queue.put_nowait(None)
+
+                            if echo_turn:
+                                in_buf = []
+                                out_buf = []
+                                output_noise = False
+                                output_noise_samples = []
+                                echo_turn = False
+                                continue
 
                             full_in = " ".join(in_buf).strip()
                             if full_in:

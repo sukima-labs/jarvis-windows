@@ -32,4 +32,6 @@ Los GIF de GIPHY se muestran localmente en la instalacion personal; conservar su
 
 Secuencias adicionales del UCM: el origen individual, el publicador y el identificador de cada GIF figuran en `vigilancia_sources.json`. Se descargan para la instalación local mediante `scripts/install_vigilancia.py` y no se incluyen en el repositorio.
 
+Armadura del HUD: `ui_armor.png` es una ilustración original generada para este proyecto a partir de referencias de composición aportadas por el usuario. Las vistas previas de `posibles interfaz` no se incluyen en el repositorio.
+
 Audio de inicio: Back in Black, AC/DC. Archivo aportado por el usuario para esta instalaci?n privada; derechos de la grabaci?n y composici?n pertenecen a sus titulares.

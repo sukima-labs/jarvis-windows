@@ -1,10 +1,352 @@
 [
-  {"file": "ucm_capitan_america.gif", "title": "CAPITÁN AMÉRICA / AVENGERS", "caption": "MARVEL STUDIOS / GIPHY", "id": "LOFT5Jd31ON1b5kLtP", "source": "https://giphy.com/gifs/marvelstudios-LOFT5Jd31ON1b5kLtP"},
-  {"file": "ucm_thor_ragnarok.gif", "title": "THOR / RAGNAROK", "caption": "MARVEL STUDIOS / GIPHY", "id": "l1J9xLJCvjiz5E8da", "source": "https://giphy.com/gifs/marvelstudios-l1J9xLJCvjiz5E8da"},
-  {"file": "ucm_black_panther.gif", "title": "BLACK PANTHER / WAKANDA", "caption": "MARVEL STUDIOS / GIPHY", "id": "xUOwFSgS5n0Hq65e8w", "source": "https://giphy.com/gifs/marvelstudios-xUOwFSgS5n0Hq65e8w"},
-  {"file": "ucm_guardians.gif", "title": "GUARDIANES DE LA GALAXIA", "caption": "MARVEL / GIPHY", "id": "jTwznqaYuo7YY", "source": "https://giphy.com/gifs/marvel-guardians-of-the-galaxy-marvel-studios-jTwznqaYuo7YY"},
-  {"file": "ucm_capitana_marvel.gif", "title": "CAPITANA MARVEL", "caption": "MARVEL STUDIOS / GIPHY", "id": "p4idevU3yFGk4uKCzX", "source": "https://giphy.com/gifs/marvelstudios-p4idevU3yFGk4uKCzX"},
-  {"file": "ucm_antman.gif", "title": "ANT-MAN / QUANTUMANIA", "caption": "MARVEL STUDIOS / GIPHY", "id": "lJgS5V2EXH0TjEQdFD", "source": "https://giphy.com/gifs/marvelstudios-antman-scottlang-antmanandthewaspquantumania-lJgS5V2EXH0TjEQdFD"},
-  {"file": "ucm_doctor_strange.gif", "title": "DOCTOR STRANGE / MULTIVERSO", "caption": "DISNEY+ / GIPHY", "id": "YPsxi5NevgmzhqeUk7", "source": "https://giphy.com/gifs/disneyplus-doctor-strange-marvel-studios-in-the-multiverse-of-madness-YPsxi5NevgmzhqeUk7"},
-  {"file": "ucm_spiderman.gif", "title": "SPIDER-MAN / NO WAY HOME", "caption": "SPIDER-MAN / GIPHY", "id": "JdbMyzoRGxYrv8QpGt", "source": "https://giphy.com/gifs/SpiderManMovie-spiderman-spidermannowayhome-no-way-home-JdbMyzoRGxYrv8QpGt"}
+  {
+    "file": "ucm_capitan_america.gif",
+    "title": "CAPITÁN AMÉRICA / AVENGERS",
+    "caption": "MARVEL STUDIOS / GIPHY",
+    "id": "LOFT5Jd31ON1b5kLtP",
+    "source": "https://giphy.com/gifs/marvelstudios-LOFT5Jd31ON1b5kLtP"
+  },
+  {
+    "file": "ucm_thor_ragnarok.gif",
+    "title": "THOR / RAGNAROK",
+    "caption": "MARVEL STUDIOS / GIPHY",
+    "id": "l1J9xLJCvjiz5E8da",
+    "source": "https://giphy.com/gifs/marvelstudios-l1J9xLJCvjiz5E8da"
+  },
+  {
+    "file": "ucm_black_panther.gif",
+    "title": "BLACK PANTHER / WAKANDA",
+    "caption": "MARVEL STUDIOS / GIPHY",
+    "id": "xUOwFSgS5n0Hq65e8w",
+    "source": "https://giphy.com/gifs/marvelstudios-xUOwFSgS5n0Hq65e8w"
+  },
+  {
+    "file": "ucm_guardians.gif",
+    "title": "GUARDIANES DE LA GALAXIA",
+    "caption": "MARVEL / GIPHY",
+    "id": "jTwznqaYuo7YY",
+    "source": "https://giphy.com/gifs/marvel-guardians-of-the-galaxy-marvel-studios-jTwznqaYuo7YY"
+  },
+  {
+    "file": "ucm_capitana_marvel.gif",
+    "title": "CAPITANA MARVEL",
+    "caption": "MARVEL STUDIOS / GIPHY",
+    "id": "p4idevU3yFGk4uKCzX",
+    "source": "https://giphy.com/gifs/marvelstudios-p4idevU3yFGk4uKCzX"
+  },
+  {
+    "file": "ucm_antman.gif",
+    "title": "ANT-MAN / QUANTUMANIA",
+    "caption": "MARVEL STUDIOS / GIPHY",
+    "id": "lJgS5V2EXH0TjEQdFD",
+    "source": "https://giphy.com/gifs/marvelstudios-antman-scottlang-antmanandthewaspquantumania-lJgS5V2EXH0TjEQdFD"
+  },
+  {
+    "file": "ucm_doctor_strange.gif",
+    "title": "DOCTOR STRANGE / MULTIVERSO",
+    "caption": "DISNEY+ / GIPHY",
+    "id": "YPsxi5NevgmzhqeUk7",
+    "source": "https://giphy.com/gifs/disneyplus-doctor-strange-marvel-studios-in-the-multiverse-of-madness-YPsxi5NevgmzhqeUk7"
+  },
+  {
+    "file": "ucm_spiderman.gif",
+    "title": "SPIDER-MAN / NO WAY HOME",
+    "caption": "SPIDER-MAN / GIPHY",
+    "id": "JdbMyzoRGxYrv8QpGt",
+    "source": "https://giphy.com/gifs/SpiderManMovie-spiderman-spidermannowayhome-no-way-home-JdbMyzoRGxYrv8QpGt"
+  },
+  {
+    "file": "tenor_avengers_endgame_01.gif",
+    "title": "AVENGERS / ENDGAME",
+    "caption": "TENOR / ESCENA UCM",
+    "media_url": "https://media.tenor.com/7nzgknJjZaAAAAAM/avengers-assemble-avengers.gif",
+    "source": "https://tenor.com/view/avengers-assemble-avengers-avengers-endgame-squad-teamwork-gif-14751505"
+  },
+  {
+    "file": "tenor_avengers_endgame_02.gif",
+    "title": "AVENGERS / ENDGAME",
+    "caption": "TENOR / ESCENA UCM",
+    "media_url": "https://media.tenor.com/48At-FGuwowAAAAM/avengers-running.gif",
+    "source": "https://tenor.com/view/avengers-running-lets-do-this-gif-19919029"
+  },
+  {
+    "file": "tenor_avengers_endgame_03.gif",
+    "title": "AVENGERS / ENDGAME",
+    "caption": "TENOR / ESCENA UCM",
+    "media_url": "https://media.tenor.com/oN31wv4z4tQAAAAM/captain-america-avengers-endgame.gif",
+    "source": "https://tenor.com/view/captain-america-avengers-endgame-gif-14090135"
+  },
+  {
+    "file": "tenor_avengers_infinity_war_01.gif",
+    "title": "AVENGERS / INFINITY WAR",
+    "caption": "TENOR / ESCENA UCM",
+    "media_url": "https://media.tenor.com/9zoU3Gyx5hAAAAAM/mad-titan-thanos.gif",
+    "source": "https://tenor.com/view/mad-titan-thanos-avengers-infinity-war-angry-revenge-gif-16691539"
+  },
+  {
+    "file": "tenor_avengers_infinity_war_02.gif",
+    "title": "AVENGERS / INFINITY WAR",
+    "caption": "TENOR / ESCENA UCM",
+    "media_url": "https://media.tenor.com/CKpzoBEJE4sAAAAM/dr-strange-infinity-war.gif",
+    "source": "https://tenor.com/view/dr-strange-infinity-war-avengers-benedict-cumberbatch-gif-14133232"
+  },
+  {
+    "file": "tenor_avengers_infinity_war_03.gif",
+    "title": "AVENGERS / INFINITY WAR",
+    "caption": "TENOR / ESCENA UCM",
+    "media_url": "https://media.tenor.com/kJUWzGpepDwAAAAM/marvel-marvel-studios.gif",
+    "source": "https://tenor.com/view/marvel-marvel-studios-avengers-infinity-war-captain-america-gif-17987800"
+  },
+  {
+    "file": "tenor_thor_ragnarok_01.gif",
+    "title": "THOR / RAGNAROK",
+    "caption": "TENOR / ESCENA UCM",
+    "media_url": "https://media.tenor.com/-GHIFfso8j0AAAAM/loki-thor-ragnarok.gif",
+    "source": "https://tenor.com/view/loki-thor-ragnarok-leaning-forward-lock-in-gif-17897806390880694845"
+  },
+  {
+    "file": "tenor_thor_ragnarok_02.gif",
+    "title": "THOR / RAGNAROK",
+    "caption": "TENOR / ESCENA UCM",
+    "media_url": "https://media.tenor.com/bLZPt4KBE10AAAAM/thor-ragnarok.gif",
+    "source": "https://tenor.com/view/thor-ragnarok-chris-hemsworth-gif-11661868"
+  },
+  {
+    "file": "tenor_thor_ragnarok_03.gif",
+    "title": "THOR / RAGNAROK",
+    "caption": "TENOR / ESCENA UCM",
+    "media_url": "https://media.tenor.com/t4ABfYDyCloAAAAM/hela-hela-odinsdottir.gif",
+    "source": "https://tenor.com/view/hela-hela-odinsdottir-goddessof-death-thorragnarok-ragnorak-gif-26247691"
+  },
+  {
+    "file": "tenor_black_panther_01.gif",
+    "title": "BLACK PANTHER / WAKANDA",
+    "caption": "TENOR / ESCENA UCM",
+    "media_url": "https://media.tenor.com/-zKxCjLmPnwAAAAM/black-panther-marvel-studios-black-panther.gif",
+    "source": "https://tenor.com/view/black-panther-marvel-studios-black-panther-marvel-studios-marvel-chadwick-boseman-gif-18100724509717184124"
+  },
+  {
+    "file": "tenor_black_panther_02.gif",
+    "title": "BLACK PANTHER / WAKANDA",
+    "caption": "TENOR / ESCENA UCM",
+    "media_url": "https://media.tenor.com/jpWgbBf78JwAAAAM/tchalla-black-panther.gif",
+    "source": "https://tenor.com/view/tchalla-black-panther-chadwich-boseman-captain-america-civil-war-claws-gif-5462517"
+  },
+  {
+    "file": "tenor_black_panther_03.gif",
+    "title": "BLACK PANTHER / WAKANDA",
+    "caption": "TENOR / ESCENA UCM",
+    "media_url": "https://media.tenor.com/ftnnJJUCyH8AAAAM/yibambe-ibambe.gif",
+    "source": "https://tenor.com/view/yibambe-ibambe-black-panther-endgame-avengers-gif-14672643"
+  },
+  {
+    "file": "tenor_guardians_of_the_galaxy_01.gif",
+    "title": "GUARDIANES / GALAXIA",
+    "caption": "TENOR / ESCENA UCM",
+    "media_url": "https://media.tenor.com/T822s4-JDWsAAAAM/guardians-of-the-galaxy.gif",
+    "source": "https://tenor.com/view/guardians-of-the-galaxy-gif-5750453181545516395"
+  },
+  {
+    "file": "tenor_guardians_of_the_galaxy_02.gif",
+    "title": "GUARDIANES / GALAXIA",
+    "caption": "TENOR / ESCENA UCM",
+    "media_url": "https://media.tenor.com/b5vpXJEaO7cAAAAM/groot-happy-dance.gif",
+    "source": "https://tenor.com/view/groot-happy-dance-all-good-baby-groot-guardians-of-the-galaxy-gif-17668367"
+  },
+  {
+    "file": "tenor_guardians_of_the_galaxy_03.gif",
+    "title": "GUARDIANES / GALAXIA",
+    "caption": "TENOR / ESCENA UCM",
+    "media_url": "https://media.tenor.com/VYk2hpykYSsAAAAM/guardians-of-the-galaxy-rocket.gif",
+    "source": "https://tenor.com/view/guardians-of-the-galaxy-rocket-wink-smile-thats-right-gif-18749244"
+  },
+  {
+    "file": "tenor_doctor_strange_multiverse_of_madness_02.gif",
+    "title": "DOCTOR STRANGE / MULTIVERSO",
+    "caption": "TENOR / ESCENA UCM",
+    "media_url": "https://media.tenor.com/zcub4UexnYEAAAAM/doctor-strange-doctor-strange-in-the-multiverse-of-madness.gif",
+    "source": "https://tenor.com/view/doctor-strange-doctor-strange-in-the-multiverse-of-madness-multiverse-sam-raimi-benedict-cumberbatch-gif-24893998"
+  },
+  {
+    "file": "tenor_doctor_strange_multiverse_of_madness_03.gif",
+    "title": "DOCTOR STRANGE / MULTIVERSO",
+    "caption": "TENOR / ESCENA UCM",
+    "media_url": "https://media.tenor.com/VFEMwU1x6dcAAAAM/doctor-strange-doctor-strange-in-the-multiverse-of-madness.gif",
+    "source": "https://tenor.com/view/doctor-strange-doctor-strange-in-the-multiverse-of-madness-multiverse-of-madness-benedict-cumberbatch-gif-24880901"
+  },
+  {
+    "file": "tenor_spiderman_no_way_home_01.gif",
+    "title": "SPIDER-MAN / NO WAY HOME",
+    "caption": "TENOR / ESCENA UCM",
+    "media_url": "https://media.tenor.com/ErmTRTtZSwkAAAAM/landing-spider-man.gif",
+    "source": "https://tenor.com/view/landing-spider-man-peter-parker-tom-holland-andrew-garfield-gif-25022884"
+  },
+  {
+    "file": "tenor_spiderman_no_way_home_03.gif",
+    "title": "SPIDER-MAN / NO WAY HOME",
+    "caption": "TENOR / ESCENA UCM",
+    "media_url": "https://media.tenor.com/aveNKb5dvy4AAAAM/spider-man-spider-man-no-way-home.gif",
+    "source": "https://tenor.com/view/spider-man-spider-man-no-way-home-tobey-maguire-andrew-garfield-tom-holland-gif-24990719"
+  },
+  {
+    "file": "tenor_captain_america_civil_war_01.gif",
+    "title": "CAPITÁN AMÉRICA / CIVIL WAR",
+    "caption": "TENOR / ESCENA UCM",
+    "media_url": "https://media.tenor.com/mUdLuXD5Ij0AAAAM/captain-america-civil-war-double-team.gif",
+    "source": "https://tenor.com/view/captain-america-civil-war-double-team-ironman-bucky-cap-gif-4862080"
+  },
+  {
+    "file": "tenor_captain_america_civil_war_02.gif",
+    "title": "CAPITÁN AMÉRICA / CIVIL WAR",
+    "caption": "TENOR / ESCENA UCM",
+    "media_url": "https://media.tenor.com/q-VfF96NQFYAAAAM/avengers-civil-war.gif",
+    "source": "https://tenor.com/view/avengers-civil-war-captain-america-marvel-superheros-gif-7371318"
+  },
+  {
+    "file": "tenor_captain_america_civil_war_03.gif",
+    "title": "CAPITÁN AMÉRICA / CIVIL WAR",
+    "caption": "TENOR / ESCENA UCM",
+    "media_url": "https://media.tenor.com/vVG6LoCsiKgAAAAM/civil-war-captain.gif",
+    "source": "https://tenor.com/view/civil-war-captain-america-civil-war-gif-5476923"
+  },
+  {
+    "file": "tenor_shang_chi_01.gif",
+    "title": "SHANG-CHI / DIEZ ANILLOS",
+    "caption": "TENOR / ESCENA UCM",
+    "media_url": "https://media.tenor.com/XURX9sJ3wucAAAAM/shangchi-ten-rings.gif",
+    "source": "https://tenor.com/view/shangchi-ten-rings-simului-marvel-energy-gif-22662484"
+  },
+  {
+    "file": "tenor_shang_chi_02.gif",
+    "title": "SHANG-CHI / DIEZ ANILLOS",
+    "caption": "TENOR / ESCENA UCM",
+    "media_url": "https://media.tenor.com/baz-8FxVALMAAAAM/shang-chi-fight.gif",
+    "source": "https://tenor.com/view/shang-chi-fight-simu-liu-marvel-mcu-gif-22099096"
+  },
+  {
+    "file": "tenor_shang_chi_03.gif",
+    "title": "SHANG-CHI / DIEZ ANILLOS",
+    "caption": "TENOR / ESCENA UCM",
+    "media_url": "https://media.tenor.com/o3oiSsAiQPYAAAAM/fighting-mandarin.gif",
+    "source": "https://tenor.com/view/fighting-mandarin-wenwu-shang-chi-legend-of-the-ten-rings-rings-gif-22599028"
+  },
+  {
+    "file": "tenor_eternals_marvel_01.gif",
+    "title": "ETERNALS",
+    "caption": "TENOR / ESCENA UCM",
+    "media_url": "https://media.tenor.com/uKajymOJDdQAAAAM/eternals-home.gif",
+    "source": "https://tenor.com/view/eternals-home-ready-lets-go-gif-22026895"
+  },
+  {
+    "file": "tenor_eternals_marvel_02.gif",
+    "title": "ETERNALS",
+    "caption": "TENOR / ESCENA UCM",
+    "media_url": "https://media.tenor.com/Nkke_CsLCL0AAAAM/bring-it-on-thena.gif",
+    "source": "https://tenor.com/view/bring-it-on-thena-angelina-jolie-eternals-come-get-some-gif-23105385"
+  },
+  {
+    "file": "tenor_wandavision_01.gif",
+    "title": "WANDAVISION",
+    "caption": "TENOR / ESCENA UCM",
+    "media_url": "https://media.tenor.com/LcNW0DDEV_AAAAAM/vision-disneyplus.gif",
+    "source": "https://tenor.com/view/vision-disneyplus-marvel-wanda-wandavision-gif-19981677"
+  },
+  {
+    "file": "tenor_wandavision_02.gif",
+    "title": "WANDAVISION",
+    "caption": "TENOR / ESCENA UCM",
+    "media_url": "https://media.tenor.com/TvBpJaAjeJkAAAAM/wandavision-vision.gif",
+    "source": "https://tenor.com/view/wandavision-vision-wanda-maximoff-happy-dance-smiling-gif-24596090"
+  },
+  {
+    "file": "tenor_wandavision_03.gif",
+    "title": "WANDAVISION",
+    "caption": "TENOR / ESCENA UCM",
+    "media_url": "https://media.tenor.com/LOk_VuCFO-IAAAAM/you-guys-know-i-can-move-things-with-my-mind-right.gif",
+    "source": "https://tenor.com/view/you-guys-know-i-can-move-things-with-my-mind-right-gif-3236187449608977378"
+  },
+  {
+    "file": "tenor_loki_marvel_01.gif",
+    "title": "LOKI / TVA",
+    "caption": "TENOR / ESCENA UCM",
+    "media_url": "https://media.tenor.com/J3mfv0uJMSAAAAAM/thor-ragnarok-loki.gif",
+    "source": "https://tenor.com/view/thor-ragnarok-loki-loki-laufeyson-tom-hiddleston-marvel-gif-25463547"
+  },
+  {
+    "file": "tenor_loki_marvel_02.gif",
+    "title": "LOKI / TVA",
+    "caption": "TENOR / ESCENA UCM",
+    "media_url": "https://media.tenor.com/Lr9CsLWCVCAAAAAM/loki-laufeyson.gif",
+    "source": "https://tenor.com/view/loki-laufeyson-disney-marvel-disney-plus-gif-19524401"
+  },
+  {
+    "file": "tenor_loki_marvel_03.gif",
+    "title": "LOKI / TVA",
+    "caption": "TENOR / ESCENA UCM",
+    "media_url": "https://media.tenor.com/HoZjBGcrXxYAAAAM/loki-tom.gif",
+    "source": "https://tenor.com/view/loki-tom-hiddleston-gif-18367366"
+  },
+  {
+    "file": "tenor_moon_knight_01.gif",
+    "title": "MOON KNIGHT",
+    "caption": "TENOR / ESCENA UCM",
+    "media_url": "https://media.tenor.com/9IiQtsAGD7YAAAAM/moon-knight-mr-knight.gif",
+    "source": "https://tenor.com/view/moon-knight-mr-knight-khonshu-steven-grant-spin-gif-25385259"
+  },
+  {
+    "file": "tenor_moon_knight_02.gif",
+    "title": "MOON KNIGHT",
+    "caption": "TENOR / ESCENA UCM",
+    "media_url": "https://media.tenor.com/zZvmh-fRVdEAAAAM/moon-knight-switch.gif",
+    "source": "https://tenor.com/view/moon-knight-switch-unconscious-gif-25824785"
+  },
+  {
+    "file": "tenor_moon_knight_03.gif",
+    "title": "MOON KNIGHT",
+    "caption": "TENOR / ESCENA UCM",
+    "media_url": "https://media.tenor.com/L__S2MOPhY8AAAAM/marc-spector-steven-grant.gif",
+    "source": "https://tenor.com/view/marc-spector-steven-grant-moon-knight-moon-knight-marvel-marvel-gif-25315165"
+  },
+  {
+    "file": "tenor_ant_man_quantumania_01.gif",
+    "title": "ANT-MAN / QUANTUMANIA",
+    "caption": "TENOR / ESCENA UCM",
+    "media_url": "https://media.tenor.com/G0Rp6ICeV6EAAAAM/antman-family-cassie-lang.gif",
+    "source": "https://tenor.com/view/antman-family-cassie-lang-stature-stinger-wasp-gif-26982213"
+  },
+  {
+    "file": "tenor_ant_man_quantumania_02.gif",
+    "title": "ANT-MAN / QUANTUMANIA",
+    "caption": "TENOR / ESCENA UCM",
+    "media_url": "https://media.tenor.com/V5_FITcduz8AAAAM/quantumania-kang-time-chair.gif",
+    "source": "https://tenor.com/view/quantumania-kang-time-chair-destroy-antman-chronopolis-gif-27483282"
+  },
+  {
+    "file": "tenor_ant_man_quantumania_03.gif",
+    "title": "ANT-MAN / QUANTUMANIA",
+    "caption": "TENOR / ESCENA UCM",
+    "media_url": "https://media.tenor.com/c1DYRAuaSBUAAAAM/quantumania-ant-mans.gif",
+    "source": "https://tenor.com/view/quantumania-ant-mans-ants-antmen-scott-lang-gif-27533599"
+  },
+  {
+    "file": "tenor_captain_marvel_01.gif",
+    "title": "CAPITANA MARVEL",
+    "caption": "TENOR / ESCENA UCM",
+    "media_url": "https://media.tenor.com/cc6nOM9QaGMAAAAM/captain-marvel-carol-danvers.gif",
+    "source": "https://tenor.com/view/captain-marvel-carol-danvers-gif-13152837"
+  },
+  {
+    "file": "tenor_captain_marvel_02.gif",
+    "title": "CAPITANA MARVEL",
+    "caption": "TENOR / ESCENA UCM",
+    "media_url": "https://media.tenor.com/h175eTFGvzMAAAAM/captain-marvel-floating.gif",
+    "source": "https://tenor.com/view/captain-marvel-floating-brie-larson-gif-14587386"
+  },
+  {
+    "file": "tenor_captain_marvel_03.gif",
+    "title": "CAPITANA MARVEL",
+    "caption": "TENOR / ESCENA UCM",
+    "media_url": "https://media.tenor.com/sbYUliASur4AAAAM/captain-marvel-brie-larson.gif",
+    "source": "https://tenor.com/view/captain-marvel-brie-larson-thanos-fight-mcu-gif-15957562"
+  }
 ]

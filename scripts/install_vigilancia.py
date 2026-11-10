@@ -5,6 +5,7 @@ from __future__ import annotations
 import io
 import json
 from pathlib import Path
+from urllib.parse import urlparse
 
 import requests
 from PIL import Image, ImageSequence
@@ -19,10 +20,19 @@ def install_clip(item: dict) -> bool:
     target = ASSETS / item["file"]
     if target.exists():
         return True
-    media_id = item["id"]
-    if not media_id.isalnum() or target.suffix.lower() != ".gif" or target.parent != ASSETS:
+    if target.suffix.lower() != ".gif" or target.parent != ASSETS:
         raise ValueError("Entrada de vigilancia no válida")
-    response = requests.get(f"https://media.giphy.com/media/{media_id}/giphy.gif", timeout=25)
+    if "media_url" in item:
+        media_url = item["media_url"]
+        parsed = urlparse(media_url)
+        if parsed.scheme != "https" or parsed.hostname != "media.tenor.com" or not parsed.path.endswith(".gif"):
+            raise ValueError("Origen de vídeo no permitido")
+    else:
+        media_id = item["id"]
+        if not media_id.isalnum():
+            raise ValueError("Identificador de GIPHY no válido")
+        media_url = f"https://media.giphy.com/media/{media_id}/giphy.gif"
+    response = requests.get(media_url, timeout=25)
     response.raise_for_status()
     if len(response.content) > MAX_BYTES or not response.content.startswith((b"GIF87a", b"GIF89a")):
         raise ValueError("El archivo recibido no es un GIF válido")
