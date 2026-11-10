@@ -30,8 +30,8 @@ Galeria animada local
 
 Los GIF de GIPHY se muestran localmente en la instalacion personal; conservar sus creditos y condiciones de la plataforma al redistribuir el proyecto.
 
-Secuencias adicionales del UCM: el origen individual, el publicador y el identificador de cada GIF figuran en `vigilancia_sources.json`. Se descargan para la instalación local mediante `scripts/install_vigilancia.py` y no se incluyen en el repositorio.
+Secuencias adicionales del UCM: el origen individual, el publicador y el identificador de cada GIF figuran en `vigilancia_sources.json`. Se incluyen en este repositorio privado a petición del usuario; `scripts/install_vigilancia.py` permite restaurar las que falten. Los derechos de las escenas pertenecen a sus respectivos titulares.
 
-Armadura del HUD: `ui_armor.png` es una ilustración original generada para este proyecto a partir de referencias de composición aportadas por el usuario. Las vistas previas de `posibles interfaz` no se incluyen en el repositorio.
+Armadura del HUD: `ui_armor.png` es una ilustración original generada para este proyecto a partir de referencias de composición aportadas por el usuario. Las imágenes de `posibles interfaz` son referencias de terceros aportadas por el usuario y se conservan como material de consulta en este repositorio privado.
 
 Audio de inicio: Back in Black, AC/DC. Archivo aportado por el usuario para esta instalaci?n privada; derechos de la grabaci?n y composici?n pertenecen a sus titulares.
