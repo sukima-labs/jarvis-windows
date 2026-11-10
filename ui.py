@@ -1,6 +1,6 @@
 ﻿"""Interfaz de J.A.R.V.I.S para Windows, desarrollada por Sukima Labs."""
 
-import os, time, math, random, threading, ctypes, itertools, webbrowser
+import os, time, math, random, threading, ctypes, itertools, webbrowser, json
 import tkinter as tk
 from tkinter import simpledialog
 from collections import deque
@@ -633,8 +633,8 @@ class JarvisUI:
         self._startup_song_played = False
         self._startup_song_track = None
         self._flight_cameo_started = 0.0
-        self._flight_cameo_duration = 12.0
-        self._flight_cameo_next = time.monotonic() + random.uniform(4.0, 6.0)
+        self._flight_cameo_duration = 10.0
+        self._flight_cameo_next = time.monotonic() + 1.5
         self._flight_clips = []
         clip_specs = (
             ("iron_man_flight.gif", "IRON MAN / VUELO", "VIGILANCIA JARVIS / MK III"),
@@ -645,6 +645,12 @@ class JarvisUI:
             ("iron_man_reveal.gif", "IRON MAN / VUELO", "ANIMACION / LOTTIEFILES"),
             ("iron_man_core_source.gif", "IRON MAN / NUCLEO", "ANIMACION / LOTTIEFILES"),
         )
+        try:
+            extra_specs = json.loads((assets_dir / "vigilancia_sources.json").read_text(encoding="utf-8"))
+            clip_specs = tuple((item["file"], item["title"], item["caption"])
+                               for item in extra_specs if isinstance(item, dict)) + clip_specs
+        except (OSError, ValueError, KeyError, TypeError):
+            pass
         for filename, title, caption in clip_specs:
             try:
                 animation = Image.open(assets_dir / filename)
@@ -773,6 +779,7 @@ class JarvisUI:
         self._build_pause_button()
         self._build_shutdown_button()
         self._build_settings_panel()
+        self._build_template_button()
         self._build_voice_selector(self._settings_body)
         self._build_template_selector(self._settings_body)
         self._build_sfx_button(self._settings_body)
@@ -1024,6 +1031,23 @@ class JarvisUI:
         c.create_text(14, 33, text=MODEL_BADGE, fill="#A79B87", font=font_body(9), anchor="w")
         c.create_text(bw - 14, bh // 2, text="▾" if self._settings_open else "▸",
                       fill=accent, font=font_display(14), anchor="e")
+
+    def _build_template_button(self):
+        self._template_button = tk.Canvas(self.root, width=168, height=46,
+                                           bg=C_BG, highlightthickness=0, cursor="hand2")
+        self._template_button.bind("<Button-1>", lambda event: self._cycle_ui_template())
+        self._draw_template_button()
+
+    def _draw_template_button(self):
+        c = self._template_button
+        c.delete("all")
+        accent = "#54C9FF" if self._ui_template == "visor" else "#F29A4A" if self._ui_template == "tactico" else C_PRI
+        c.create_rectangle(0, 0, 168, 46, fill="#171922", outline=accent, width=1)
+        c.create_line(0, 0, 25, 0, fill=accent, width=3)
+        c.create_text(11, 14, text="CAMBIAR INTERFAZ", fill=accent,
+                      font=font_display(10), anchor="w")
+        c.create_text(11, 33, text=UI_TEMPLATES[self._ui_template],
+                      fill=C_TEXT, font=font_body_bold(8), anchor="w")
 
     def _toggle_settings_panel(self):
         self._settings_open = not self._settings_open
@@ -1349,6 +1373,7 @@ class JarvisUI:
         self._ui_template = key
         self._template_var.set(UI_TEMPLATES[key])
         save_app_config({"ui_template": key})
+        self._draw_template_button()
         self._refresh_template_background()
         self._draw()
 
@@ -2083,6 +2108,8 @@ class JarvisUI:
         self._mute_canvas.place(x=start_x, y=row1_y)
         self._pause_canvas.place(x=start_x + mute_w + gap, y=row1_y)
         self._shutdown_canvas.place(x=start_x + mute_w + pause_w + gap * 2, y=row1_y)
+        self._template_button.place(x=self._settings_geometry["btn_x"] + self._settings_geometry["btn_w"] + 12,
+                                    y=self._settings_geometry["btn_y"])
 
         geo = self._settings_geometry
         panel_x = geo["panel_x"]
@@ -2336,7 +2363,7 @@ class JarvisUI:
             self._flight_clip_index = (self._flight_clip_index + 1) % len(self._flight_clips)
             self._flight_clip = self._flight_clips[self._flight_clip_index]
             self._flight_cameo_started = time.monotonic()
-            self._flight_cameo_next = now + random.uniform(22.0, 30.0)
+            self._flight_cameo_next = now + self._flight_cameo_duration + 0.8
 
         self._draw()
         self.root.after(33, self._animate)
@@ -3189,7 +3216,7 @@ class JarvisUI:
 
         c.create_text(panel_x+12, panel_y+18, text="VIGILANCIA DE JARVIS", fill="#E7B66B",
                       font=font_display(8), anchor="w")
-        c.create_text(panel_x+12, panel_y+39, text="IRON MAN / AVENGERS", fill="#EFE9DD",
+        c.create_text(panel_x+12, panel_y+39, text="ARCHIVO / UCM", fill="#EFE9DD",
                       font=font_body_bold(8), anchor="w")
         c.create_text(panel_x+12, panel_y+58, text=f"{len(self._flight_clips):02d} SECUENCIAS",
                       fill="#B3A68F", font=font_display(8), anchor="w")
@@ -3410,7 +3437,7 @@ class JarvisUI:
         c.create_text(W//2+18, 52, text="ASISTENTE EN TIEMPO REAL / SUKIMA LABS",
                       fill=C_MID, font=font_body(10))
         if self._brand_icon_photo:
-            c.create_image(W//2-245, 35, image=self._brand_icon_photo, anchor="center")
+            c.create_image(W//2-160, 35, image=self._brand_icon_photo, anchor="center")
 
         indicator_state = "PAUSED" if self.paused else self._jarvis_state
         ind_col = self._state_color(indicator_state)

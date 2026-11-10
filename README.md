@@ -19,6 +19,8 @@ El repositorio incluye las animaciones de Iron Man bajo Lottie Simple License y 
 
 En **Configuración → Interfaz** puedes elegir entre **Mando Sukima**, **Visor azul** y **Mapa táctico**. `F6` cambia al siguiente diseño. La selección se conserva al reiniciar. Los fondos del visor y del mapa táctico son imágenes originales creadas para este proyecto; cada modo tiene una animación central diferente y conserva la conversación, el estado de Gemini y la vigilancia visual.
 
+El botón **INTERFAZ** de la cabecera también cambia el diseño con un clic. Para ampliar las secuencias locales de vigilancia con Capitan América, Thor, Black Panther, Guardianes de la Galaxia, Capitana Marvel, Ant-Man, Doctor Strange y Spider-Man, ejecuta `venv\Scripts\python.exe scripts\install_vigilancia.py`. Los GIF proceden de las páginas oficiales indicadas en `assets/vigilancia_sources.json` y se mantienen fuera de Git.
+
 ## Marca
 
 El isotipo maestro es `isotipo_color.svg`; los iconos de Windows están en `assets/`.
