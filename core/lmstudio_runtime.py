@@ -199,8 +199,12 @@ class JarvisLocal:
         self._paused = paused
 
     def _on_vigilance_alert(self, message: str):
-        if not self._paused and not self._is_speaking and not self.ui.muted:
-            self._speak_blocking("Señor, simulación del UCM: " + message)
+        if not self._paused and not self._is_speaking:
+            sound_seconds = self.ui.play_vigilance_alert_sfx()
+            if sound_seconds:
+                time.sleep(sound_seconds + 0.12)
+            if not self._paused:
+                self._speak_blocking("Atención, señor. Simulación del UCM: " + message)
 
     def _on_text_command(self, text: str):
         if self._paused or not text.strip():
@@ -348,8 +352,6 @@ class JarvisLocal:
         self.ui.set_state("ERROR")
 
     def _speak_blocking(self, text: str):
-        if self.ui.muted:
-            return
         self.set_speaking(True)
         done = threading.Event()
 

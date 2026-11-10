@@ -2,6 +2,10 @@
 
 import os, time, math, random, threading, ctypes, itertools, webbrowser, json
 import tkinter as tk
+try:
+    import winsound
+except ImportError:
+    winsound = None
 from tkinter import simpledialog
 from collections import deque
 from pathlib import Path
@@ -1396,7 +1400,7 @@ class JarvisUI:
 
     # ── Mute button ──────────────────────────────────────────────────────────
     def _build_mute_button(self):
-        self._mute_canvas = tk.Canvas(self.root, width=126, height=36,
+        self._mute_canvas = tk.Canvas(self.root, width=174, height=36,
                                       bg=C_BG, highlightthickness=0, cursor="hand2")
         self._mute_canvas.bind("<Button-1>", lambda e: self._toggle_mute())
         self._draw_mute_button()
@@ -1407,16 +1411,16 @@ class JarvisUI:
         bh = int(c["height"])
         c.delete("all")
         if self.muted:
-            col, icon, lbl = C_MUTED, "🔇", " SILENCIADO"
+            col, label = C_MUTED, "ACTIVAR MICRÓFONO"
         else:
-            col, icon, lbl = C_GREEN, "🎙", " ACTIVO"
+            col, label = C_GREEN, "SILENCIAR MICRÓFONO"
         bl = 6
         for bx, by, sx, sy in [(0, 0, 1, 1), (bw, 0, -1, 1),
                                 (0, bh, 1, -1), (bw, bh, -1, -1)]:
             c.create_line(bx, by, bx+sx*bl, by, fill=col, width=2)
             c.create_line(bx, by, bx, by+sy*bl, fill=col, width=2)
-        c.create_text(bw//2, bh//2, text=f"{icon}{lbl}",
-                      fill=col, font=font_body_bold(11))
+        c.create_text(bw//2, bh//2, text=label,
+                      fill=col, font=font_body_bold(9))
 
     def _build_pause_button(self):
         self._pause_canvas = tk.Canvas(self.root, width=126, height=36,
@@ -2106,7 +2110,7 @@ class JarvisUI:
     def _place_layout_widgets(self):
         self.log_frame.place(x=self.CHAT_X, y=self.CHAT_Y, width=self.CHAT_W, height=self.CHAT_H)
         gap = 12
-        mute_w = 126
+        mute_w = int(self._mute_canvas["width"])
         pause_w = 126
         shutdown_w = int(self._shutdown_canvas["width"])
         total = mute_w + pause_w + shutdown_w + gap * 2
@@ -2200,8 +2204,19 @@ class JarvisUI:
         self._ucm_next_alert = now_mono + random.uniform(130.0, 200.0)
         title, message, film = self._ucm_alert
         self.write_log(f"UCM · ficción ({film}): {message}")
-        if self.on_vigilance_alert and not self.muted and now_mono - self._last_user_activity >= 35.0:
+        if self.on_vigilance_alert:
             threading.Thread(target=self.on_vigilance_alert, args=(message,), daemon=True).start()
+
+    def play_vigilance_alert_sfx(self) -> float:
+        """Señal original antes del aviso hablado; devuelve su duración."""
+        if not self._sfx_on or self.paused or winsound is None:
+            return 0.0
+        try:
+            winsound.PlaySound(str(BASE_DIR / "assets" / "ucm_alert.wav"),
+                               winsound.SND_FILENAME | winsound.SND_ASYNC | winsound.SND_NODEFAULT)
+            return 0.48
+        except RuntimeError:
+            return 0.0
 
     def get_effects_volume(self) -> float:
         return self.sound.get_volume()
@@ -2390,7 +2405,8 @@ class JarvisUI:
             self._flight_cameo_next = mono_now + self._flight_cameo_duration
 
         if (mono_now >= self._ucm_next_alert and not self.paused and not self.user_speaking
-                and not self.speaking and self._jarvis_state == "LISTENING"):
+                and not self.speaking and self._jarvis_state == "LISTENING"
+                and mono_now - self._last_user_activity >= 35.0):
             self._emit_ucm_alert(mono_now)
 
         self._draw()
@@ -3484,7 +3500,7 @@ class JarvisUI:
         c.create_text(self.FCX, H-16, fill="#A79B87", font=font_body(7),
                        text=f"GEMINI LIVE  /  {len(self._flight_clips):02d} ESCENAS  /  {UI_TEMPLATES[self._ui_template]}")
         c.create_text(W-18, H-16, fill="#B3A68F", font=font_body(8),
-                       text="[F4] AUDIO  [F5] PAUSA  [F6] INTERFAZ  [F9] MINI  [F11] PANTALLA  [ESC] SALIR", anchor="e")
+                       text="[F4] MICRÓFONO  [F5] PAUSA  [F6] INTERFAZ  [F9] MINI  [F11] PANTALLA  [ESC] SALIR", anchor="e")
         self._draw_flight_cameo(c)
 
     def wait_for_api_key(self):

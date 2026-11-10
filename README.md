@@ -23,6 +23,8 @@ El botón **INTERFAZ** de la cabecera también cambia el diseño con un clic. Pa
 
 La vigilancia reproduce GIF animados de forma continua y, cada cierto tiempo, muestra un aviso ficticio del UCM en pantalla. Si Jarvis está conectado y lleva un rato sin conversación, también lo comenta en voz. Estos avisos son una simulación narrativa basada en personajes y mundos de las películas, no noticias ni detecciones reales. El panel **Centro de avisos** muestra el último suceso y la cuenta regresiva del siguiente; la telemetría del equipo permanece en su panel independiente.
 
+El botón **Silenciar micrófono** (o `F4`) deja Jarvis en marcha y mantiene sus respuestas de voz. Durante cada respuesta, Jarvis corta temporalmente la entrada del micrófono, descarta audio pendiente y espera un instante al terminar para que Gemini no interprete su propia voz como una orden del usuario. Los avisos del UCM comienzan con un sonido breve original y siguen con el comentario hablado.
+
 ## Marca
 
 El isotipo maestro es `isotipo_color.svg`; los iconos de Windows están en `assets/`.

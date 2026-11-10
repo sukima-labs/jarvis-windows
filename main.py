@@ -11,6 +11,7 @@ import traceback
 import os
 import re
 import sys
+import time
 from pathlib import Path
 
 import pyaudio  # type: ignore[reportMissingModuleSource]
@@ -497,6 +498,7 @@ class JarvisLive:
         self._loop          = None
         self._is_speaking   = False
         self._speaking_lock = threading.Lock()
+        self._mic_gate_until = 0.0
         self._startup_greeting_sent = False
         self._startup_greeting_interrupted = False
         self._startup_greeting_audio_received = False
@@ -517,8 +519,15 @@ class JarvisLive:
     def _on_vigilance_alert(self, message: str):
         if self._paused or not self._loop or not self.session or self._is_speaking:
             return
+        with self._speaking_lock:
+            self._mic_gate_until = max(self._mic_gate_until, time.monotonic() + 1.6)
+        sound_seconds = self.ui.play_vigilance_alert_sfx()
+        if sound_seconds:
+            time.sleep(sound_seconds + 0.12)
+        if self._paused or not self.session or self.ui.user_speaking:
+            return
         prompt = (
-            "Avisa con una sola frase breve en español: Señor, simulación del UCM: "
+            "Avisa en voz con una sola frase breve en español: Atención, señor. Simulación del UCM: "
             + message + " No uses herramientas ni añadas información externa."
         )
         asyncio.run_coroutine_threadsafe(
@@ -586,6 +595,7 @@ class JarvisLive:
     def set_speaking(self, value: bool):
         with self._speaking_lock:
             self._is_speaking = value
+            self._mic_gate_until = max(self._mic_gate_until, time.monotonic() + (1.8 if not value else 0.3))
         if value:
             self.ui.set_state("SPEAKING")
         else:
@@ -909,12 +919,18 @@ class JarvisLive:
     async def _send_realtime(self):
         while True:
             chunk = await self.out_queue.get()
+            if self.ui.muted or self._paused or self._microphone_blocked():
+                continue
             await self.session.send_realtime_input(
                 audio=types.Blob(
                     data=chunk,
                     mime_type=f"audio/pcm;rate={SEND_SAMPLE_RATE}",
                 )
             )
+
+    def _microphone_blocked(self) -> bool:
+        with self._speaking_lock:
+            return self._is_speaking or time.monotonic() < self._mic_gate_until
 
     async def _listen_audio(self):
         print("[JARVIS] 🎤 Mikrofon başladı")
@@ -928,7 +944,7 @@ class JarvisLive:
             while True:
                 data = await asyncio.to_thread(
                     stream.read, CHUNK_SIZE, exception_on_overflow=False)
-                if not self.ui.muted and not self._paused:
+                if not self.ui.muted and not self._paused and not self._microphone_blocked():
                     await self.out_queue.put(data)
         except Exception as e:
             print(f"[JARVIS] ❌ Mikrofon: {e}")
@@ -945,6 +961,8 @@ class JarvisLive:
             while True:
                 async for response in self.session.receive():
                     if response.data:
+                        with self._speaking_lock:
+                            self._mic_gate_until = max(self._mic_gate_until, time.monotonic() + 0.9)
                         for offset in range(0, len(response.data), OUTPUT_FRAME_BYTES):
                             self.audio_in_queue.put_nowait(
                                 response.data[offset:offset + OUTPUT_FRAME_BYTES]
