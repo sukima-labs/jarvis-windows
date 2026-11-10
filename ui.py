@@ -678,7 +678,7 @@ class JarvisUI:
         self._ucm_alert_until = 0.0
         self._ucm_last_alert_index = -1
         self._ucm_alert_count = 0
-        self._ucm_next_alert = time.monotonic() + random.uniform(75.0, 110.0)
+        self._ucm_next_alert = time.monotonic() + random.uniform(42.0, 60.0)
         self._last_user_activity = time.monotonic()
         self._settings_geometry = {
             "btn_x": 14,
