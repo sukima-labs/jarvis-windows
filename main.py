@@ -660,7 +660,7 @@ class JarvisLive:
             "\n\nIDIOMA Y VOZ: Responde siempre en español latinoamericano, "
             "con pronunciación natural y sin cambiar al inglés. Habla con calma, "
             "seguridad y precisión, como un asistente tecnológico profesional. "
-            "Usa una voz masculina adulta de registro grave, ligeramente rasposa, "
+            "Usa una voz masculina adulta de registro grave y timbre profundo, "
             "con dicción clara, ritmo pausado y tono firme, sobrio y discreto. "
             "No imites "
             "la voz de ningún actor ni afirmes ser una grabación original."
@@ -685,7 +685,7 @@ class JarvisLive:
             speech_config=types.SpeechConfig(
                 voice_config=types.VoiceConfig(
                     prebuilt_voice_config=types.PrebuiltVoiceConfig(
-                        voice_name=str(get_app_config_value("voice", "Algenib") or "Algenib")
+                        voice_name=str(get_app_config_value("voice", "Charon") or "Charon")
                     )
                 )
             ),

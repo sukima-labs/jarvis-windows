@@ -67,7 +67,7 @@ FOOTER_H = 34
 INPUT_H  = 34
 CONTROL_H = 146
 
-VOICES = ["Algenib", "Charon", "Puck", "Aoede", "Kore", "Fenrir", "Leda", "Orus", "Zephyr"]
+VOICES = ["Charon", "Algenib", "Puck", "Aoede", "Kore", "Fenrir", "Leda", "Orus", "Zephyr"]
 
 # ── Lokal font yukleyicisi ──────────────────────────────────────────────────
 # Fonts/ klasorundeki tum .ttf dosyalarini *private* olarak yukleriz: sistem
@@ -870,9 +870,9 @@ class JarvisUI:
     # ── Voice ─────────────────────────────────────────────────────────────────
     def _load_voice(self) -> str:
         try:
-            return str(load_app_config().get("voice", "Algenib") or "Algenib")
+            return str(load_app_config().get("voice", "Charon") or "Charon")
         except Exception:
-            return "Algenib"
+            return "Charon"
 
     # ── Shutdown button (sağ alt, büyük) ────────────────────────────────────
     def _build_shutdown_button(self):
@@ -1163,7 +1163,7 @@ class JarvisUI:
         if self._startup_song_played:
             return
         self._startup_song_played = True
-        song_path = BASE_DIR / "WhatsApp Audio 2026-11-10 at 02.51.30.mpeg"
+        song_path = BASE_DIR / "assets" / "back_in_black_intro.mpeg"
         if not song_path.is_file():
             self.write_log("ERR: No encuentro el audio de inicio adjunto.")
             return

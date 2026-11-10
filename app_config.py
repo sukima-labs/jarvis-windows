@@ -11,7 +11,7 @@ CONFIG_PATH = CONFIG_DIR / "api_keys.json"
 
 DEFAULT_CONFIG = {
     "gemini_api_key": "",
-    "voice": "Algenib",
+    "voice": "Charon",
     "youtube_api_key": "",
     "youtube_channel_handle": "",
     # Configuración del modo local

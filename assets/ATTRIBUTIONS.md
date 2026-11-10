@@ -29,3 +29,5 @@ Galeria animada local
 - iron_man_core_source.gif: https://lottiefiles.com/free-animation/iron-man-DIm3w719cL. Animacion de Aslan Ayyldz bajo Lottie Simple License.
 
 Los GIF de GIPHY se muestran localmente en la instalacion personal; conservar sus creditos y condiciones de la plataforma al redistribuir el proyecto.
+
+Audio de inicio: Back in Black, AC/DC. Archivo aportado por el usuario para esta instalaci?n privada; derechos de la grabaci?n y composici?n pertenecen a sus titulares.

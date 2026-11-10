@@ -19,6 +19,7 @@
 
 # Medios personales o de terceros sin licencia de redistribución
 *.mpeg
+!/assets/back_in_black_intro.mpeg
 /assets/*.gif
 !/assets/iron_man_core_source.gif
 !/assets/iron_man_reveal.gif
