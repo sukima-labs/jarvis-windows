@@ -1,0 +1,31 @@
+﻿# Entorno y cachés locales
+/venv/
+**/__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Credenciales y configuración local
+/config/api_keys.json
+/config/*.local.json
+.env
+.env.*
+!.env.example
+
+# Memoria personal de ejecución
+/memory/*.json
+!/memory/*.example.json
+
+# Medios personales o de terceros sin licencia de redistribución
+*.mpeg
+/assets/*.gif
+!/assets/iron_man_core_source.gif
+!/assets/iron_man_reveal.gif
+/assets/*.jpg
+
+# Archivos de editor y sistema
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
