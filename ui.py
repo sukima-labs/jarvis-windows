@@ -32,6 +32,8 @@ UI_TEMPLATES = {
     "visor": "VISOR AZUL",
     "tactico": "MAPA TÁCTICO",
     "armadura": "ARMADURA / HUD",
+    "archivo": "ARCHIVO NEURAL",
+    "orbita": "CENTRO ORBITAL",
 }
 SPANISH_MONTHS = (
     "enero", "febrero", "marzo", "abril", "mayo", "junio",
@@ -1064,7 +1066,7 @@ class JarvisUI:
     def _draw_template_button(self):
         c = self._template_button
         c.delete("all")
-        accent = "#54C9FF" if self._ui_template == "visor" else "#F29A4A" if self._ui_template == "tactico" else C_PRI
+        accent = {"visor": "#54C9FF", "tactico": "#F29A4A", "archivo": "#FF617D", "orbita": "#88E8C8"}.get(self._ui_template, C_PRI)
         c.create_rectangle(0, 0, 168, 46, fill="#171922", outline=accent, width=1)
         c.create_line(0, 0, 25, 0, fill=accent, width=3)
         c.create_text(11, 14, text="CAMBIAR INTERFAZ", fill=accent,
@@ -1417,9 +1419,9 @@ class JarvisUI:
             armor = self._armor_source.resize((width, height), Image.Resampling.LANCZOS)
             self._armor_photo = ImageTk.PhotoImage(armor, master=self.root)
         if hasattr(self, "log_frame"):
-            accent = "#4BCED8" if self._ui_template == "armadura" else C_MID
+            accent = {"armadura":"#4BCED8","archivo":"#FF617D","orbita":"#88E8C8"}.get(self._ui_template,C_MID)
             self.log_frame.configure(highlightbackground=accent)
-            self.log_text.tag_config("ai", foreground=accent if self._ui_template == "armadura" else C_PRI)
+            self.log_text.tag_config("ai", foreground=accent if self._ui_template in ("armadura","archivo","orbita") else C_PRI)
 
     # ── Mute button ──────────────────────────────────────────────────────────
     def _build_mute_button(self):
@@ -3265,8 +3267,8 @@ class JarvisUI:
         panel_w = self.CENTER_X1 - self.CENTER_X0 - 20
         panel_h = 108
         panel_y = self.H - FOOTER_H - panel_h - 4
-        accent = "#4BCED8" if self._ui_template == "armadura" else "#E7B66B"
-        border = "#2D5863" if self._ui_template == "armadura" else "#836A46"
+        accent = {"armadura":"#4BCED8","archivo":"#FF617D","orbita":"#88E8C8"}.get(self._ui_template,"#E7B66B")
+        border = {"armadura":"#2D5863","archivo":"#865165","orbita":"#32665E"}.get(self._ui_template,"#836A46")
         c.create_rectangle(panel_x, panel_y, panel_x+panel_w, panel_y+panel_h,
                            fill="#101920" if self._ui_template == "armadura" else "#15171F",
                            outline=border, width=1)
@@ -3356,10 +3358,10 @@ class JarvisUI:
         start_x = self.CENTER_X0 + (center_w - total_w) / 2
         y = HDR_H + 7
         h = 43
-        state = "ENLACE ACTIVO" if self._jarvis_state in {"LISTENING", "SPEAKING", "THINKING"} else "CONECTANDO"
-        microphone = "ENTRADA ACTIVA" if not self.muted and not self.paused else "ENTRADA EN PAUSA"
+        state = "ACTIVO" if self._jarvis_state in {"LISTENING", "SPEAKING", "THINKING"} else "CONECTANDO"
+        microphone = "ESCUCHANDO" if not self.muted and not self.paused else "EN PAUSA"
         modules = [
-            ("MOTOR DE IA", "GEMINI LIVE  \u00b7  " + state, C_PRI),
+            ("MOTOR DE IA", "GEMINI  \u00b7  " + state, C_PRI),
             ("MICROFONO", "16 kHz  \u00b7  " + microphone, C_GREEN if not self.muted else C_ORG),
             ("VOZ DE JARVIS", f"{self._current_voice.upper()}  \u00b7  24 kHz", C_BLUE),
         ]
@@ -3455,6 +3457,146 @@ class JarvisUI:
         c.create_text(cx, top+16, text="PLATAFORMA DE ARMADURA  /  ESCANEO ACTIVO",
                       fill=cyan, font=font_display(9))
 
+    def _draw_archive_rail(self, c):
+        """Índice de datos y señal, con una estructura de archivo vertical."""
+        x, y, w = 10, HDR_H+10, self.LEFT_W-18
+        h = self.H-FOOTER_H-y-10
+        rose, muted = "#FF617D", "#865165"
+        c.create_rectangle(x, y, x+w, y+h, fill="#180E1A", outline=muted)
+        c.create_rectangle(x, y, x+5, y+h, fill=rose, outline="")
+        c.create_text(x+18, y+23, text="ARCHIVO NEURAL", fill=rose,
+                      font=font_display(13), anchor="w")
+        c.create_text(x+18, y+47, text="Señal de conversación y memoria", fill="#DEB7C5",
+                      font=font_body(9), anchor="w")
+        c.create_line(x+18, y+62, x+w-16, y+62, fill=muted)
+        c.create_text(x+18, y+100, text=time.strftime("%H:%M"), fill="#FFE5ED",
+                      font=font_display(30), anchor="w")
+        c.create_text(x+w-18, y+92, text=self._weather_card["primary"], fill=rose,
+                      font=font_display(17), anchor="e")
+        c.create_text(x+18, y+126, text=self._weather_card["city"].upper(),
+                      fill="#CBA1B4", font=font_body_bold(8), anchor="w", tags=("weather_city",))
+        c.create_text(x+18, y+164, text="TRÁFICO DE DATOS", fill=rose,
+                      font=font_display(9), anchor="w")
+        graph_y = y+187
+        values = list(self._cpu_hist)[-38:]
+        if len(values)>1:
+            step = (w-38)/(len(values)-1)
+            points = []
+            for i, value in enumerate(values):
+                points.extend((x+18+i*step, graph_y+74-min(100,max(0,value))*0.7))
+            c.create_line(*points, fill=rose, width=2, smooth=True)
+        for row, (label, key) in enumerate((("PROCESADOR", "cpu"), ("MEMORIA", "ram"), ("DISCO", "disk"))):
+            yy = y+305+row*56
+            value = max(0, min(100, self._stats.get(key, 0)))
+            c.create_text(x+18, yy, text=label, fill="#CBA1B4", font=font_body_bold(8), anchor="w")
+            c.create_text(x+w-18, yy, text=f"{value:.0f}%", fill="#FFE5ED",
+                          font=font_display(10), anchor="e")
+            c.create_rectangle(x+18, yy+12, x+w-18, yy+17, fill="#352232", outline="")
+            c.create_rectangle(x+18, yy+12, x+18+(w-36)*value/100, yy+17, fill=rose, outline="")
+        c.create_line(x+18, y+h-125, x+w-18, y+h-125, fill=muted)
+        c.create_text(x+18, y+h-99, text="ÚLTIMA ALERTA", fill=rose,
+                      font=font_display(9), anchor="w")
+        alert = self._ucm_alert[0] if self._ucm_alert else "Canal UCM en espera"
+        c.create_text(x+18, y+h-74, text=alert[:34], fill="#FFE5ED",
+                      font=font_body_bold(9), anchor="w")
+        c.create_text(x+18, y+h-39, text=f"{len(self._flight_clips)} secuencias visuales", fill="#CBA1B4",
+                      font=font_body(9), anchor="w")
+
+    def _draw_archive_core(self, c):
+        """Matriz neural: espectro animado, enlaces y dos niveles de lectura."""
+        cx = self.FCX
+        cy = HDR_H+(self.CTRL_Y-HDR_H)*0.43
+        width = min(470, self.CENTER_X1-self.CENTER_X0-52)
+        rose, dim, text_col = "#FF617D", "#653247", "#FFE5ED"
+        c.create_rectangle(cx-width/2, cy-154, cx+width/2, cy+155,
+                           fill="#160D19", outline=dim)
+        for i in range(13):
+            xx = cx-width/2+18+i*(width-36)/12
+            amp = 30+85*abs(math.sin(self.tick*0.045+i*0.7))
+            c.create_line(xx, cy-amp, xx, cy+amp, fill=rose if i%3==0 else dim,
+                          width=4 if i%3==0 else 2)
+        for r in (48, 91, 130):
+            c.create_oval(cx-r, cy-r, cx+r, cy+r, outline=dim)
+        for i in range(6):
+            a=self.tick*0.012+i*math.tau/6
+            px=cx+math.cos(a)*128
+            py=cy+math.sin(a)*128
+            c.create_line(cx, cy, px, py, fill="#502D45")
+            c.create_oval(px-4, py-4, px+4, py+4, fill=text_col, outline=rose)
+        c.create_oval(cx-27, cy-27, cx+27, cy+27, fill="#280F25", outline=rose, width=3)
+        c.create_text(cx, cy, text="J", fill=text_col, font=font_display(23))
+        c.create_text(cx-width/2+14, cy-174, text="MATRIZ DE VOZ / ENLACE ACTIVO",
+                      fill=rose, font=font_display(10), anchor="w")
+        c.create_text(cx, cy+184, text="ANÁLISIS DE SEÑAL EN TIEMPO REAL",
+                      fill=text_col, font=font_display(10))
+        c.create_text(cx, cy+210, text=f"GEMINI LIVE    /    CPU {self._stats['cpu']:.0f}%    /    RAM {self._stats['ram']:.0f}%",
+                      fill="#CBA1B4", font=font_body(9))
+
+    def _draw_orbit_rail(self, c):
+        """Consola de misión con lista de sistemas y vector de enlace."""
+        x, y, w = 10, HDR_H+10, self.LEFT_W-18
+        h=self.H-FOOTER_H-y-10
+        mint, dim="#88E8C8", "#32665E"
+        c.create_rectangle(x,y,x+w,y+h,fill="#0B1A1B",outline=dim)
+        self._bracket(c,x,y,w,h,col=mint,bl=17)
+        c.create_text(x+17,y+25,text="CENTRO ORBITAL",fill=mint,
+                      font=font_display(13),anchor="w")
+        c.create_text(x+17,y+53,text="Estado de misión / enlace global",fill="#A4C7BB",
+                      font=font_body(9),anchor="w")
+        c.create_line(x+17,y+69,x+w-17,y+69,fill=dim)
+        link_state = "ACTIVO" if self._jarvis_state in {"LISTENING", "SPEAKING", "THINKING"} else "CONECTANDO"
+        rows=(("ENLACE GEMINI",link_state),("MICRÓFONO","SILENCIADO" if self.muted else "ESCUCHANDO"),
+              ("VIGILANCIA UCM",f"{len(self._flight_clips)} CLIPS"),
+              ("CLIMA LOCAL",self._weather_card["primary"]),
+              ("LOCALIZACIÓN",self._weather_card["city"][:21]))
+        for i,(label,value) in enumerate(rows):
+            yy=y+100+i*75
+            c.create_oval(x+17,yy-4,x+25,yy+4,fill=mint if i!=1 or not self.muted else "#F3B16D",outline="")
+            c.create_text(x+35,yy-2,text=label,fill="#A4C7BB",font=font_body_bold(8),anchor="w")
+            c.create_text(x+35,yy+19,text=value,fill="#E1FFF5",font=font_display(11),anchor="w",
+                          tags=("weather_city",) if i==4 else ())
+            c.create_line(x+17,yy+39,x+w-17,yy+39,fill="#24413F")
+        c.create_text(x+17,y+h-93,text="CARGA DEL EQUIPO",fill=mint,
+                      font=font_display(9),anchor="w")
+        for i,(key,label) in enumerate((("cpu","CPU"),("ram","RAM"),("battery","ENERGÍA"))):
+            yy=y+h-67+i*23
+            val=max(0,min(100,self._stats.get(key,0)))
+            c.create_text(x+17,yy,text=label,fill="#A4C7BB",font=font_body(8),anchor="w")
+            c.create_rectangle(x+94,yy-4,x+w-18,yy+3,fill="#24413F",outline="")
+            c.create_rectangle(x+94,yy-4,x+94+(w-112)*val/100,yy+3,fill=mint,outline="")
+
+    def _draw_orbit_core(self,c):
+        """Mapa orbital animado con sectores, trayectorias y nodos."""
+        cx=self.FCX
+        cy=HDR_H+(self.CTRL_Y-HDR_H)*0.43
+        r=min(165,(self.CENTER_X1-self.CENTER_X0)*0.38,(self.CTRL_Y-HDR_H)*0.33)
+        mint,dim="#88E8C8","#32665E"
+        c.create_text(cx,cy-r-38,text="MAPA DE MISIÓN / SEGUIMIENTO",fill=mint,
+                      font=font_display(10))
+        for radius in (r*.35,r*.62,r):
+            c.create_oval(cx-radius,cy-radius,cx+radius,cy+radius,
+                          outline=dim,width=2 if radius==r else 1)
+        for i in range(12):
+            a=math.tau*i/12
+            c.create_line(cx+math.cos(a)*r*.91,cy+math.sin(a)*r*.91,
+                          cx+math.cos(a)*r*1.06,cy+math.sin(a)*r*1.06,fill=mint)
+        for i in range(3):
+            radius=r*(.35+i*.31)
+            angle=self.tick*(.008+i*.003)+(i*2)
+            px=cx+math.cos(angle)*radius
+            py=cy+math.sin(angle)*radius*.62
+            c.create_oval(px-6,py-6,px+6,py+6,fill=mint,outline="#E1FFF5",width=2)
+            c.create_line(cx,cy,px,py,fill="#244C4B",dash=(3,5))
+        sweep=(self.tick*.55)%360
+        c.create_arc(cx-r,cy-r,cx+r,cy+r,start=sweep,extent=46,
+                     outline=mint,style="arc",width=4)
+        c.create_oval(cx-27,cy-27,cx+27,cy+27,fill="#103336",outline=mint,width=3)
+        c.create_text(cx,cy,text="S",fill="#E1FFF5",font=font_display(20))
+        c.create_text(cx,cy+r+34,text="SUKIMA / NÚCLEO DE MISIÓN",fill="#E1FFF5",
+                      font=font_display(11))
+        c.create_text(cx,cy+r+57,text=f"{len(self._flight_clips)} SECUENCIAS   /   {self._weather_card['city'].upper()}",
+                      fill="#A4C7BB",font=font_body(9))
+
     def _draw_visor_core(self, c):
         """Óptica de visor: retícula de enfoque, barrido y señal de voz."""
         cx, cy = self.FCX, self.FCY - 28
@@ -3537,11 +3679,12 @@ class JarvisUI:
             for x in range(0, W, step):
                 for y in range(0, H, step):
                     c.create_rectangle(x, y, x+1, y+1, fill=C_DIMMER, outline="")
-        elif self._ui_template == "armadura":
+        elif self._ui_template in ("armadura", "archivo", "orbita"):
+            grid_color={"armadura":"#10242B","archivo":"#2A1625","orbita":"#112C2B"}[self._ui_template]
             for x in range(self.CENTER_X0, self.CENTER_X1, 34):
-                c.create_line(x, HDR_H, x, self.CTRL_Y, fill="#10242B")
+                c.create_line(x, HDR_H, x, self.CTRL_Y, fill=grid_color)
             for y in range(HDR_H, self.CTRL_Y, 34):
-                c.create_line(self.CENTER_X0, y, self.CENTER_X1, y, fill="#10242B")
+                c.create_line(self.CENTER_X0, y, self.CENTER_X1, y, fill=grid_color)
 
         # Tarama çizgisi (yavaş, çok soluk)
         scan_y = (t * 0.7) % (H + 60) - 30
@@ -3569,6 +3712,10 @@ class JarvisUI:
         # ── Yan paneller ──────────────────────────────────────────────────────
         if self._ui_template == "armadura":
             self._draw_armor_diagnostics(c)
+        elif self._ui_template == "archivo":
+            self._draw_archive_rail(c)
+        elif self._ui_template == "orbita":
+            self._draw_orbit_rail(c)
         else:
             self._draw_left_panel(c)
         self._draw_right_panel(c)
@@ -3582,8 +3729,12 @@ class JarvisUI:
             self._draw_visor_core(c)
         elif self._ui_template == "tactico":
             self._draw_tactical_core(c)
-        else:
+        elif self._ui_template == "armadura":
             self._draw_armor_core(c)
+        elif self._ui_template == "archivo":
+            self._draw_archive_core(c)
+        else:
+            self._draw_orbit_core(c)
         self._draw_hud_modules(c)
         self._draw_ucm_notification(c)
 
@@ -3597,7 +3748,7 @@ class JarvisUI:
         # ── HEADER ───────────────────────────────────────────────────────────
         c.create_rectangle(0, 0, W, HDR_H, fill=C_BG, outline="")
         # Alt çizgi — teal parlak
-        theme_accent = "#4BCED8" if self._ui_template == "armadura" else C_MID
+        theme_accent = {"armadura":"#4BCED8","archivo":"#FF617D","orbita":"#88E8C8"}.get(self._ui_template,C_MID)
         c.create_line(0, HDR_H, W, HDR_H, fill=theme_accent, width=1)
         for i in range(3):
             a = 60 - i * 18
@@ -3606,7 +3757,7 @@ class JarvisUI:
 
         # Büyük başlık
         draw_text_glow(c, W//2+18, 24, text=SYSTEM_NAME,
-                       fill="#C8F5F6" if self._ui_template == "armadura" else C_PRI,
+                       fill={"armadura":"#C8F5F6","archivo":"#FFE5ED","orbita":"#E1FFF5"}.get(self._ui_template,C_PRI),
                        glow_color=theme_accent, font=font_display(26))
         c.create_text(W//2+18, 52, text="ASISTENTE EN TIEMPO REAL / SUKIMA LABS",
                        fill=theme_accent, font=font_body(10))
