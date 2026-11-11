@@ -34,6 +34,8 @@ UI_TEMPLATES = {
     "armadura": "ARMADURA / HUD",
     "archivo": "ARCHIVO NEURAL",
     "orbita": "CENTRO ORBITAL",
+    "cosmos": "OBSERVATORIO CÓSMICO",
+    "espectro": "ESPECTRO DE VOZ",
 }
 SPANISH_MONTHS = (
     "enero", "febrero", "marzo", "abril", "mayo", "junio",
@@ -601,14 +603,11 @@ class JarvisUI:
         self._template_background_photo = None
         references_dir = BASE_DIR / "posibles interfaz"
         self._reference_source = {}
-        for key, filename in (
-            ("visor", "360_F_1157865405_Q5hMFx9nb0W8qqauFCHZtCvJI1jZdOBz.webp"),
-            ("archivo", "148393700-una-interfaz-que-tiene-conceptos-de-tecnología.webp"),
-            ("tactico", "interfaz-futurista-que-muestra-matriz-vibrante-luces-azules-hud-interfaz-futuristica-hud-gui-diseno-fondo-juego-tecnologia-fondo-que-muestra-datos-digitales-ai-generado_538213-46.webp"),
-            ("orbita", "iron-man-jarvis-desktop-7kyecxg439heuzid.webp"),
-        ):
+        self._scene_source = {}
+        for key, filename in (("orbita", "nasa_earth_orbit.jpg"),
+                              ("cosmos", "nasa_carina.png")):
             try:
-                self._reference_source[key] = Image.open(references_dir / filename).convert("RGB")
+                self._scene_source[key] = Image.open(assets_dir / filename).convert("RGB")
             except (OSError, ValueError):
                 pass
         selected_reference = Path(str(load_app_config().get("tactical_reference", ""))).name
@@ -619,6 +618,7 @@ class JarvisUI:
             except (OSError, ValueError):
                 pass
         self._reference_scene_photo = None
+        self._scene_photo = None
         try:
             self._armor_source = Image.open(assets_dir / "ui_armor.png").convert("RGBA")
         except (OSError, ValueError):
@@ -1556,9 +1556,7 @@ class JarvisUI:
         self._draw()
 
     def _refresh_template_background(self):
-        source = (None if self._ui_template in {"tactico"} or
-                  (self._ui_template == "visor" and self.RIGHT_W == 0)
-                  else self._template_source.get(self._ui_template))
+        source = self._template_source.get(self._ui_template)
         self._template_background_photo = None
         self._armor_photo = None
         if source is not None:
@@ -1566,22 +1564,25 @@ class JarvisUI:
             target = ImageEnhance.Brightness(target).enhance(0.52 if self._ui_template == "visor" else 0.60)
             self._template_background_photo = ImageTk.PhotoImage(target, master=self.root)
         self._reference_scene_photo = None
-        scene = self._reference_source.get(self._ui_template) if self.RIGHT_W == 0 or self._ui_template in {"tactico", "orbita"} else None
-        if scene is not None:
-            max_width = (min(700, int((self.CHAT_PANEL_X-self.LEFT_W)*0.92))
-                         if self._ui_template == "visor" else
-                         min(900, int(self.W*0.72)) if self._ui_template == "archivo" else
-                         min(500 if self._ui_template == "orbita" else 650,
-                             self.CENTER_X1-self.CENTER_X0-20))
-            max_height = self.CTRL_Y-HDR_H-50
-            scale = min(max_width/scene.width, max_height/scene.height)
-            target = scene.resize((max(1,round(scene.width*scale)),
-                                   max(1,round(scene.height*scale))),
-                                  Image.Resampling.LANCZOS)
-            target = ImageEnhance.Brightness(target).enhance(
-                0.83 if self._ui_template == "visor" else 0.76 if self._ui_template == "orbita" else
-                0.72 if self._ui_template == "tactico" else 0.67)
+        reference = self._reference_source.get("tactico") if self._ui_template == "tactico" else None
+        if reference is not None and self.W >= 1250:
+            # La galería es material de consulta: nunca ampliar miniaturas WebP.
+            scale = min(0.85, 145 / reference.width, 106 / reference.height)
+            target = reference.resize((round(reference.width * scale),
+                                       round(reference.height * scale)), Image.Resampling.LANCZOS)
             self._reference_scene_photo = ImageTk.PhotoImage(target, master=self.root)
+        self._scene_photo = None
+        scene = self._scene_source.get(self._ui_template)
+        if scene is not None:
+            if self._ui_template == "orbita":
+                scene = scene.crop((850, 90, 3050, 2120))
+            max_w = min(self.CENTER_X1-self.CENTER_X0-30, 610 if self._ui_template == "cosmos" else 470)
+            max_h = min(self.CTRL_Y-HDR_H-90, 370 if self._ui_template == "cosmos" else 350)
+            scale = min(max_w/scene.width, max_h/scene.height, 1.0)
+            target = scene.resize((max(1, round(scene.width*scale)),
+                                   max(1, round(scene.height*scale))), Image.Resampling.LANCZOS)
+            target = ImageEnhance.Brightness(target).enhance(0.78 if self._ui_template == "cosmos" else 0.72)
+            self._scene_photo = ImageTk.PhotoImage(target, master=self.root)
         if self._ui_template == "armadura" and self._armor_source is not None:
             max_w = int((self.CENTER_X1 - self.CENTER_X0) * 0.94)
             if self.RIGHT_W == 0:
@@ -1594,7 +1595,8 @@ class JarvisUI:
             self._armor_photo = ImageTk.PhotoImage(armor, master=self.root)
         if hasattr(self, "log_frame"):
             accent = {"armadura":"#4BCED8","visor":"#49C8FF","tactico":"#F29A4A",
-                      "archivo":"#FF617D","orbita":"#88E8C8"}.get(self._ui_template,C_MID)
+                      "archivo":"#FF617D","orbita":"#88E8C8",
+                      "cosmos":"#BFA7FF","espectro":"#E497C9"}.get(self._ui_template,C_MID)
             self.log_frame.configure(highlightbackground=accent)
             self.log_text.tag_config("ai", foreground=accent if self._ui_template != "sukima" else C_PRI)
 
@@ -3954,7 +3956,7 @@ class JarvisUI:
         cy=HDR_H+(self.CTRL_Y-HDR_H)*0.43
         r=min(165,(self.CENTER_X1-self.CENTER_X0)*0.38,(self.CTRL_Y-HDR_H)*0.33)
         mint,dim="#88E8C8","#32665E"
-        c.create_text(cx,cy-r-38,text="MAPA DE MISIÓN / SEGUIMIENTO",fill=mint,
+        c.create_text(cx,HDR_H+66,text="MAPA DE MISIÓN / SEGUIMIENTO",fill=mint,
                       font=font_display(10))
         for radius in (r*.35,r*.62,r):
             c.create_oval(cx-radius,cy-radius,cx+radius,cy+radius,
@@ -3973,8 +3975,7 @@ class JarvisUI:
         sweep=(self.tick*.55)%360
         c.create_arc(cx-r,cy-r,cx+r,cy+r,start=sweep,extent=46,
                      outline=mint,style="arc",width=4)
-        c.create_oval(cx-27,cy-27,cx+27,cy+27,fill="#103336",outline=mint,width=3)
-        c.create_text(cx,cy,text="S",fill="#E1FFF5",font=font_display(20))
+        c.create_oval(cx-6,cy-6,cx+6,cy+6,fill="#E1FFF5",outline=mint,width=2)
         c.create_text(cx,cy+r+34,text="SUKIMA / NÚCLEO DE MISIÓN",fill="#E1FFF5",
                       font=font_display(11))
         c.create_text(cx,cy+r+57,text=f"{len(self._flight_clips)} SECUENCIAS   /   {self._weather_card['city'].upper()}",
@@ -4021,21 +4022,6 @@ class JarvisUI:
         cx, cy = self.FCX, self.FCY - 28
         radius = min(166, max(95, (self.CENTER_X1 - self.CENTER_X0) * 0.23))
         gold, red, dim = "#FFBA58", "#EF5C45", "#6D3A29"
-        if self._reference_scene_photo is not None:
-            for index, rr in enumerate((radius*.78,radius*1.10)):
-                c.create_arc(cx-rr,cy-rr,cx+rr,cy+rr,
-                             start=self.tick*(.55 if index else -.42),extent=34,
-                             style="arc",outline=gold if index else red,width=3)
-            sweep=math.radians(self.tick*.75)
-            c.create_line(cx,cy,cx+math.cos(sweep)*radius*.8,
-                          cy-math.sin(sweep)*radius*.8,fill=gold,width=2)
-            c.create_oval(cx-5,cy-5,cx+5,cy+5,outline="#FFE5B4",width=2)
-            label_y=self.CTRL_Y-72
-            c.create_rectangle(cx-178,label_y-14,cx+178,label_y+14,
-                               fill="#11131A",outline="#6D3A29")
-            c.create_text(cx,label_y,text="MAPA TÁCTICO / RASTREO ACTIVO",
-                          fill="#FFE5B4",font=font_display(10))
-            return
         for scale, color, width in ((1.16, dim, 2), (0.94, gold, 3), (0.62, red, 2)):
             rr = radius * scale
             points = [coord for index in range(6)
@@ -4062,6 +4048,137 @@ class JarvisUI:
         c.create_text(cx, cy+radius+34,
                       text=f"GEMINI LIVE   /   CPU {self._stats['cpu']:.0f}%   /   MEM {self._stats['ram']:.0f}%",
                       fill="#FFD399", font=font_body_bold(9))
+        if self._reference_scene_photo is not None:
+            ref_x = self.CENTER_X1 - 94
+            ref_y = HDR_H + 128
+            rw = self._reference_scene_photo.width()
+            rh = self._reference_scene_photo.height()
+            c.create_rectangle(ref_x-rw/2-7, ref_y-rh/2-24,
+                               ref_x+rw/2+7, ref_y+rh/2+7,
+                               fill="#141015", outline="#A66A3C")
+            c.create_text(ref_x, ref_y-rh/2-12, text="REFERENCIA VISUAL",
+                          fill="#FFD399", font=font_display(7))
+            c.create_image(ref_x, ref_y, image=self._reference_scene_photo)
+
+    def _draw_cosmos_rail(self, c):
+        """Panel de observación con datos reales separados de la imagen astronómica."""
+        x, y, w = 10, HDR_H+10, self.LEFT_W-18
+        h = self.H-FOOTER_H-y-10
+        lilac, pale, dim = "#BFA7FF", "#F0EAFF", "#51436E"
+        c.create_rectangle(x,y,x+w,y+h,fill="#111223",outline=dim)
+        self._bracket(c,x,y,w,h,col=lilac,bl=18)
+        c.create_text(x+18,y+24,text="OBSERVATORIO",fill=pale,
+                      font=font_display(15),anchor="w")
+        c.create_text(x+18,y+49,text="Imagen astronómica / NASA Webb",fill=lilac,
+                      font=font_body(9),anchor="w")
+        c.create_line(x+18,y+70,x+w-18,y+70,fill=dim)
+        motor_state = "ACTIVO" if self._jarvis_state in {"LISTENING", "SPEAKING", "THINKING"} else "CONECTANDO"
+        rows = (("MOTOR", f"GEMINI / {motor_state}"),
+                ("VOZ", "HABLANDO" if self.speaking else "ESCUCHANDO" if not self.muted else "SILENCIADO"),
+                ("VIGILANCIA", f"{len(self._flight_clips)} SECUENCIAS"),
+                ("REGIÓN LOCAL", self._weather_card["city"].upper()[:23]))
+        for index, (label, value) in enumerate(rows):
+            yy = y+103+index*78
+            c.create_text(x+18,yy,text=label,fill="#9C91B6",font=font_display(8),anchor="w")
+            c.create_text(x+18,yy+26,text=value,fill=pale,font=font_body_bold(11),anchor="w")
+            c.create_line(x+18,yy+45,x+w-18,yy+45,fill="#2D2945")
+        base = y+h-146
+        c.create_text(x+18,base,text="ACTIVIDAD DEL SISTEMA",fill=lilac,
+                      font=font_display(9),anchor="w")
+        values = list(self._cpu_hist)[-32:]
+        if len(values)>1:
+            points=[]
+            for i,value in enumerate(values):
+                points.extend((x+18+i*(w-36)/(len(values)-1),base+89-max(0,min(100,value))*.63))
+            c.create_line(*points,fill=lilac,width=2,smooth=True)
+        c.create_text(x+18,y+h-22,text="FOTOGRAFÍA DE REFERENCIA / NO ES VIGILANCIA REAL",
+                      fill="#9388AE",font=font_body(7),anchor="w")
+
+    def _draw_cosmos_core(self, c):
+        cx = self.FCX
+        cy = HDR_H+(self.CTRL_Y-HDR_H)*.47
+        r = min(180,(self.CENTER_X1-self.CENTER_X0)*.29)
+        lilac, gold = "#BFA7FF", "#F6C38D"
+        c.create_text(cx,HDR_H+67,text="MAPA CÓSMICO / CANAL UCM",
+                      fill="#F0EAFF",font=font_display(11))
+        for index, radius in enumerate((r*.68,r*.88,r*1.07)):
+            c.create_arc(cx-radius,cy-radius*.72,cx+radius,cy+radius*.72,
+                         start=self.tick*(.3 if index%2 else -.22)+index*87,
+                         extent=81,style="arc",outline=lilac if index!=1 else gold,
+                         width=2 if index!=1 else 3)
+        for index in range(5):
+            angle=self.tick*.012+index*math.tau/5
+            px=cx+math.cos(angle)*r*.9
+            py=cy+math.sin(angle)*r*.58
+            c.create_oval(px-3,py-3,px+3,py+3,fill=gold,outline="#FFF1D7")
+        c.create_rectangle(cx-157,self.CTRL_Y-91,cx+157,self.CTRL_Y-48,
+                           fill="#111223",outline="#51436E")
+        c.create_text(cx,self.CTRL_Y-70,
+                      text="CANAL ACTIVO  /  " + ("ALERTA UCM" if self._ucm_alert else "EN ESPERA"),
+                      fill="#F0EAFF",font=font_display(10))
+
+    def _draw_spectrum_rail(self, c):
+        x,y,w=10,HDR_H+10,self.LEFT_W-18
+        h=self.H-FOOTER_H-y-10
+        rose,pale,dim="#E497C9","#FFE7F5","#5D3A62"
+        c.create_rectangle(x,y,x+w,y+h,fill="#1A1223",outline=dim)
+        self._bracket(c,x,y,w,h,col=rose,bl=18)
+        c.create_text(x+18,y+26,text="ESPECTRO DE VOZ",fill=pale,
+                      font=font_display(14),anchor="w")
+        c.create_text(x+18,y+52,text="Entrada y respuesta de Jarvis",fill=rose,
+                      font=font_body(9),anchor="w")
+        c.create_line(x+18,y+72,x+w-18,y+72,fill=dim)
+        state="JARVIS HABLANDO" if self.speaking else "USUARIO HABLANDO" if self.user_speaking else "MICRÓFONO SILENCIADO" if self.muted else "CANAL ABIERTO"
+        c.create_text(x+18,y+118,text=state,fill=pale,font=font_display(11),anchor="w")
+        c.create_text(x+18,y+147,text="16 kHz  /  ENTRADA DE VOZ",fill="#B8A0BC",
+                      font=font_body(9),anchor="w")
+        for index in range(32):
+            xx=x+19+index*(w-40)/32
+            level=abs(math.sin(index*.71+self.tick*.11))*((31 if self.speaking or self.user_speaking else 8))
+            c.create_line(xx,y+201-level,xx,y+201+level,fill=rose if index%4 else pale,width=3)
+        c.create_line(x+18,y+255,x+w-18,y+255,fill=dim)
+        for index,(label,value) in enumerate((("MOTOR","GEMINI"),("CPU",f"{self._stats['cpu']:.0f}%"),
+                                              ("MEMORIA",f"{self._stats['ram']:.0f}%"),
+                                              ("RED",f"{self._stats['net_down']:.0f} KB/s"))):
+            yy=y+286+index*55
+            c.create_text(x+18,yy,text=label,fill="#B8A0BC",font=font_display(8),anchor="w")
+            c.create_text(x+w-18,yy,text=value,fill=pale,font=font_body_bold(10),anchor="e")
+            c.create_line(x+18,yy+18,x+w-18,yy+18,fill="#35263F")
+        c.create_text(x+18,y+h-32,text=f"{len(self._flight_clips)} SECUENCIAS UCM",
+                      fill=rose,font=font_display(9),anchor="w")
+
+    def _draw_spectrum_core(self, c):
+        x0,x1=self.CENTER_X0+22,self.CENTER_X1-22
+        cy=HDR_H+(self.CTRL_Y-HDR_H)*.47
+        width=x1-x0
+        rose,pale,dim="#E497C9","#FFE7F5","#5D3A62"
+        active=self.speaking or self.user_speaking
+        c.create_text(self.FCX,HDR_H+68,text="SEÑAL DE VOZ / ANÁLISIS EN TIEMPO REAL",
+                      fill=pale,font=font_display(11))
+        for offset in (-90,-45,0,45,90):
+            c.create_line(x0,cy+offset,x1,cy+offset,fill="#35263F")
+        for index in range(8):
+            xx=x0+index*width/7
+            c.create_line(xx,cy-105,xx,cy+105,fill="#2A2036")
+        for layer in range(4):
+            points=[]
+            amplitude=(64 if active else 19)*(1-layer*.17)
+            for index in range(105):
+                xx=x0+index*width/104
+                envelope=max(0.0, math.sin(math.pi*index/104))**1.3
+                wave=(math.sin(index*(.22+layer*.022)-self.tick*(.13+layer*.017))+
+                      .37*math.sin(index*.51+self.tick*.19+layer))
+                points.extend((xx,cy+layer*17-26+wave*amplitude*envelope))
+            c.create_line(*points,fill=(pale,rose,"#A872C3","#6D5CBA")[layer],
+                          width=2 if layer<2 else 1,smooth=True)
+        play_x=x0+(self.tick*2.4)%width
+        c.create_line(play_x,cy-111,play_x,cy+111,fill="#F6C8E7",width=2)
+        c.create_rectangle(x0,cy+135,x1,cy+174,fill="#1A1223",outline=dim)
+        c.create_text(x0+13,cy+154,text="SALIDA" if self.speaking else "ENTRADA" if self.user_speaking else "EN ESPERA",
+                      fill=rose,font=font_display(9),anchor="w")
+        motor_state = "ACTIVO" if self._jarvis_state in {"LISTENING", "SPEAKING", "THINKING"} else "CONECTANDO"
+        c.create_text(x1-13,cy+154,text=f"GEMINI / {motor_state}",
+                      fill=pale,font=font_body_bold(9),anchor="e")
 
     def _draw(self):
         c  = self.bg
@@ -4080,18 +4197,16 @@ class JarvisUI:
             for x in range(0, W, step):
                 for y in range(0, H, step):
                     c.create_rectangle(x, y, x+1, y+1, fill=C_DIMMER, outline="")
-        elif self._ui_template in ("armadura", "archivo", "orbita"):
-            grid_color={"armadura":"#10242B","archivo":"#2A1625","orbita":"#112C2B"}[self._ui_template]
+        elif self._ui_template in ("armadura", "archivo", "orbita", "cosmos", "espectro"):
+            grid_color={"armadura":"#10242B","archivo":"#2A1625","orbita":"#112C2B",
+                        "cosmos":"#1B223F","espectro":"#291A35"}[self._ui_template]
             for x in range(self.CENTER_X0, self.CENTER_X1, 34):
                 c.create_line(x, HDR_H, x, self.CTRL_Y, fill=grid_color)
             for y in range(HDR_H, self.CTRL_Y, 34):
                 c.create_line(self.CENTER_X0, y, self.CENTER_X1, y, fill=grid_color)
-        if self._reference_scene_photo is not None:
-            scene_y = (self.FCY+8 if self._ui_template == "visor" else
-                       self.FCY-28 if self._ui_template == "tactico" else
-                       HDR_H+(self.CTRL_Y-HDR_H)*0.43 if self._ui_template == "orbita" else
-                       HDR_H+(self.CTRL_Y-HDR_H)*.47)
-            c.create_image(self.FCX, scene_y, image=self._reference_scene_photo, anchor="center")
+        if self._scene_photo is not None:
+            scene_y = HDR_H+(self.CTRL_Y-HDR_H)*(0.43 if self._ui_template == "orbita" else 0.47)
+            c.create_image(self.FCX, scene_y, image=self._scene_photo, anchor="center")
 
         # Tarama çizgisi (yavaş, çok soluk)
         scan_y = (t * 0.7) % (H + 60) - 30
@@ -4126,6 +4241,10 @@ class JarvisUI:
                 self._draw_archive_rail(c)
         elif self._ui_template == "orbita":
             self._draw_orbit_rail(c)
+        elif self._ui_template == "cosmos":
+            self._draw_cosmos_rail(c)
+        elif self._ui_template == "espectro":
+            self._draw_spectrum_rail(c)
         else:
             self._draw_left_panel(c)
         self._draw_right_panel(c)
@@ -4147,6 +4266,10 @@ class JarvisUI:
                 self._draw_armor_annotations(c)
         elif self._ui_template == "archivo":
             self._draw_archive_network(c) if self.RIGHT_W == 0 else self._draw_archive_core(c)
+        elif self._ui_template == "cosmos":
+            self._draw_cosmos_core(c)
+        elif self._ui_template == "espectro":
+            self._draw_spectrum_core(c)
         else:
             self._draw_orbit_core(c)
         self._draw_hud_modules(c)
@@ -4164,7 +4287,8 @@ class JarvisUI:
         c.create_rectangle(0, 0, W, HDR_H, fill=C_BG, outline="")
         # Alt çizgi — teal parlak
         theme_accent = {"armadura":"#4BCED8","visor":"#49C8FF","tactico":"#F29A4A",
-                        "archivo":"#FF617D","orbita":"#88E8C8"}.get(self._ui_template,C_MID)
+                        "archivo":"#FF617D","orbita":"#88E8C8",
+                        "cosmos":"#BFA7FF","espectro":"#E497C9"}.get(self._ui_template,C_MID)
         c.create_line(0, HDR_H, W, HDR_H, fill=theme_accent, width=1)
         for i in range(3):
             a = 60 - i * 18
@@ -4174,7 +4298,8 @@ class JarvisUI:
         # Büyük başlık
         draw_text_glow(c, W//2+18, 24, text=SYSTEM_NAME,
                        fill={"armadura":"#C8F5F6","visor":"#D1F4FF","tactico":"#FFE5B4",
-                             "archivo":"#FFE5ED","orbita":"#E1FFF5"}.get(self._ui_template,C_PRI),
+                             "archivo":"#FFE5ED","orbita":"#E1FFF5",
+                             "cosmos":"#EFE7FF","espectro":"#FFE3F3"}.get(self._ui_template,C_PRI),
                        glow_color=theme_accent, font=font_display(26))
         c.create_text(W//2+18, 52, text="ASISTENTE EN TIEMPO REAL / SUKIMA LABS",
                        fill=theme_accent, font=font_body(10))

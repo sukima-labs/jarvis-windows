@@ -21,6 +21,7 @@
 *.mpeg
 !/assets/back_in_black_intro.mpeg
 /assets/*.jpg
+!/assets/nasa_earth_orbit.jpg
 
 # Descargas descartadas en la revisión visual (no forman parte del catálogo)
 /assets/tenor_ant_man_and_the_wasp_03.gif

@@ -34,6 +34,10 @@ Secuencias adicionales del UCM: el origen individual, el publicador y el identif
 
 Armadura del HUD: `ui_armor.png` es una ilustración original generada para este proyecto a partir de referencias de composición aportadas por el usuario. Las imágenes de `posibles interfaz` son referencias de terceros aportadas por el usuario y se usan como material visual en este repositorio privado.
 
-Uso directo en la interfaz: Visor muestra `360_F_1157865405_Q5hMFx9nb0W8qqauFCHZtCvJI1jZdOBz.webp`; Archivo neural muestra `148393700-una-interfaz-que-tiene-conceptos-de-tecnología.webp`; Centro orbital muestra `iron-man-jarvis-desktop-7kyecxg439heuzid.webp`; y Mapa táctico inicia con `interfaz-futurista-que-muestra-matriz-vibrante-luces-azules-hud-interfaz-futuristica-hud-gui-diseno-fondo-juego-tecnologia-fondo-que-muestra-datos-digitales-ai-generado_538213-46.webp`. La galería permite elegir las demás como escena del Mapa táctico. El texto y los indicadores incrustados en esas imágenes son solo parte de la referencia visual.
+Las 15 imágenes de `posibles interfaz` se muestran en la galería a tamaño contenido. Una imagen elegida se ve como tarjeta de referencia pequeña en Mapa táctico; el arte principal usa `ui_tactical.png` y `ui_visor.png`, creados para el proyecto en resolución 1672 × 941.
+
+`nasa_earth_orbit.jpg` procede de [NASA Scientific Visualization Studio, *Spinning Earth with clouds, atmosphere, and night lights*](https://svs.gsfc.nasa.gov/5570) (visualización Kel Elkins, USRA; datos NASA/GSFC). Se muestra en Centro orbital como imagen de referencia, no como localización en tiempo real.
+
+`nasa_carina.png` procede de [NASA Science, *Webb Reveals the Carina Nebula*](https://science.nasa.gov/image-detail/web-first-images-release/) (NASA, ESA, CSA y STScI). Se muestra en Observatorio cósmico como fotografía de referencia, no como vigilancia real.
 
 Audio de inicio: Back in Black, AC/DC. Archivo aportado por el usuario para esta instalaci?n privada; derechos de la grabaci?n y composici?n pertenecen a sus titulares.
