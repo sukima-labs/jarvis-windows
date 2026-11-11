@@ -32,6 +32,8 @@ Los GIF de GIPHY se muestran localmente en la instalacion personal; conservar su
 
 Secuencias adicionales del UCM: el origen individual, el publicador y el identificador de cada GIF figuran en `vigilancia_sources.json`. Se incluyen en este repositorio privado a petición del usuario; `scripts/install_vigilancia.py` permite restaurar las que falten. Los derechos de las escenas pertenecen a sus respectivos titulares.
 
-Armadura del HUD: `ui_armor.png` es una ilustración original generada para este proyecto a partir de referencias de composición aportadas por el usuario. Las imágenes de `posibles interfaz` son referencias de terceros aportadas por el usuario y se conservan como material de consulta en este repositorio privado.
+Armadura del HUD: `ui_armor.png` es una ilustración original generada para este proyecto a partir de referencias de composición aportadas por el usuario. Las imágenes de `posibles interfaz` son referencias de terceros aportadas por el usuario y se usan como material visual en este repositorio privado.
+
+Uso directo en la interfaz: Visor muestra `360_F_1157865405_Q5hMFx9nb0W8qqauFCHZtCvJI1jZdOBz.webp`; Archivo neural muestra `148393700-una-interfaz-que-tiene-conceptos-de-tecnología.webp`; Centro orbital muestra `iron-man-jarvis-desktop-7kyecxg439heuzid.webp`; y Mapa táctico inicia con `interfaz-futurista-que-muestra-matriz-vibrante-luces-azules-hud-interfaz-futuristica-hud-gui-diseno-fondo-juego-tecnologia-fondo-que-muestra-datos-digitales-ai-generado_538213-46.webp`. La galería permite elegir las demás como escena del Mapa táctico. El texto y los indicadores incrustados en esas imágenes son solo parte de la referencia visual.
 
 Audio de inicio: Back in Black, AC/DC. Archivo aportado por el usuario para esta instalaci?n privada; derechos de la grabaci?n y composici?n pertenecen a sus titulares.

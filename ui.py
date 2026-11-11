@@ -599,6 +599,26 @@ class JarvisUI:
             except (OSError, ValueError):
                 pass
         self._template_background_photo = None
+        references_dir = BASE_DIR / "posibles interfaz"
+        self._reference_source = {}
+        for key, filename in (
+            ("visor", "360_F_1157865405_Q5hMFx9nb0W8qqauFCHZtCvJI1jZdOBz.webp"),
+            ("archivo", "148393700-una-interfaz-que-tiene-conceptos-de-tecnología.webp"),
+            ("tactico", "interfaz-futurista-que-muestra-matriz-vibrante-luces-azules-hud-interfaz-futuristica-hud-gui-diseno-fondo-juego-tecnologia-fondo-que-muestra-datos-digitales-ai-generado_538213-46.webp"),
+            ("orbita", "iron-man-jarvis-desktop-7kyecxg439heuzid.webp"),
+        ):
+            try:
+                self._reference_source[key] = Image.open(references_dir / filename).convert("RGB")
+            except (OSError, ValueError):
+                pass
+        selected_reference = Path(str(load_app_config().get("tactical_reference", ""))).name
+        if selected_reference.lower().endswith(".webp"):
+            try:
+                self._reference_source["tactico"] = Image.open(
+                    references_dir / selected_reference).convert("RGB")
+            except (OSError, ValueError):
+                pass
+        self._reference_scene_photo = None
         try:
             self._armor_source = Image.open(assets_dir / "ui_armor.png").convert("RGBA")
         except (OSError, ValueError):
@@ -704,7 +724,7 @@ class JarvisUI:
             "panel_x": 14,
             "panel_y": HDR_H + 10,
             "panel_w": 320,
-            "panel_h": 344,
+            "panel_h": 382,
         }
         self.setup_frame = None
         self.api_entry = None
@@ -807,6 +827,12 @@ class JarvisUI:
         self._build_template_button()
         self._build_voice_selector(self._settings_body)
         self._build_template_selector(self._settings_body)
+        self._reference_button = tk.Button(
+            self._settings_body, text="VER 15 REFERENCIAS DE INTERFAZ",
+            command=self._show_reference_gallery,
+            fg="#9DE5F2", bg="#152A32", activeforeground="#11131A",
+            activebackground="#9DE5F2", font=font_body_bold(9),
+            borderwidth=0, cursor="hand2")
         self._build_sfx_button(self._settings_body)
         self._build_api_button(self._settings_body)
         self._build_fx_slider(self._settings_body)
@@ -1130,6 +1156,7 @@ class JarvisUI:
         self._voice_menu.place(x=88, y=172, width=inner_w - 88, height=30)
         self._template_label.place(x=0, y=216)
         self._template_menu.place(x=88, y=210, width=inner_w - 88, height=30)
+        self._reference_button.place(x=0, y=250, width=inner_w, height=28)
 
     def _refresh_settings_status(self):
         if not hasattr(self, "_settings_status_primary"):
@@ -1402,6 +1429,116 @@ class JarvisUI:
         key = next((name for name, value in UI_TEMPLATES.items() if value == label), "sukima")
         self._set_ui_template(key)
 
+    def _show_reference_gallery(self):
+        """Permite revisar las 15 imágenes originales y aplicar una al Mapa táctico."""
+        existing = getattr(self, "_reference_gallery", None)
+        if existing is not None and existing.winfo_exists():
+            existing.lift()
+            existing.focus_force()
+            return
+        references_dir = BASE_DIR / "posibles interfaz"
+        references = sorted(references_dir.glob("*.webp"))
+        if not references:
+            self.write_log("ERR: No encuentro la carpeta de referencias de interfaz.")
+            return
+        gallery = tk.Toplevel(self.root)
+        self._reference_gallery = gallery
+        gallery.title("Referencias de interfaz / Sukima Labs")
+        gallery.configure(bg="#11131A")
+        screen_w = gallery.winfo_screenwidth()
+        screen_h = gallery.winfo_screenheight()
+        gallery_w = min(990, screen_w)
+        gallery_h = min(650, screen_h)
+        gallery.geometry(f"{gallery_w}x{gallery_h}+{max(0, (screen_w-gallery_w)//2)}+{max(0, (screen_h-gallery_h)//2)}")
+        gallery.minsize(min(800, screen_w), min(550, screen_h))
+        gallery.transient(self.root)
+        gallery.bind("<Escape>", lambda e: gallery.destroy())
+        header = tk.Label(gallery, text=f"{len(references)} REFERENCIAS DE INTERFAZ",
+                          fg="#9DE5F2", bg="#11131A", font=font_display(14), anchor="w")
+        header.pack(fill="x", padx=18, pady=(13, 6))
+        body = tk.Frame(gallery, bg="#11131A")
+        body.pack(fill="both", expand=True, padx=16, pady=(0, 16))
+        rail = tk.Frame(body, bg="#11131A", width=365)
+        rail.pack(side="left", fill="y")
+        rail.pack_propagate(False)
+        scroll = tk.Scrollbar(rail, orient="vertical")
+        scroll.pack(side="right", fill="y")
+        canvas = tk.Canvas(rail, bg="#11131A", highlightthickness=0,
+                           yscrollcommand=scroll.set)
+        canvas.pack(side="left", fill="both", expand=True)
+        scroll.configure(command=canvas.yview)
+        thumb_frame = tk.Frame(canvas, bg="#11131A")
+        canvas.create_window((0, 0), window=thumb_frame, anchor="nw")
+        thumb_frame.bind("<Configure>",
+                         lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
+        preview = tk.Frame(body, bg="#171D28", highlightbackground="#3C6776",
+                           highlightthickness=1)
+        preview.pack(side="right", fill="both", expand=True, padx=(12, 0))
+        image_label = tk.Label(preview, bg="#171D28")
+        image_label.pack(expand=True, pady=(15, 5))
+        name_label = tk.Label(preview, fg="#D7F4F7", bg="#171D28",
+                              font=font_body_bold(10), wraplength=540)
+        name_label.pack(padx=14)
+        note = tk.Label(preview,
+                        text="Vista original de referencia. Los datos incrustados en la imagen no son telemetría de Jarvis.",
+                        fg="#9AAEB9", bg="#171D28", font=font_body(9),
+                        wraplength=520, justify="center")
+        note.pack(padx=14, pady=(8, 10))
+        selected = [references[0]]
+        photos = []
+
+        def show_reference(path):
+            try:
+                image = Image.open(path).convert("RGB")
+                image.thumbnail((550, 390), Image.Resampling.LANCZOS)
+                photo = ImageTk.PhotoImage(image, master=gallery)
+            except (OSError, ValueError):
+                return
+            image_label.configure(image=photo)
+            image_label.image = photo
+            name_label.configure(text=path.name)
+            selected[0] = path
+
+        def apply_reference():
+            path = selected[0]
+            try:
+                source = Image.open(path).convert("RGB")
+            except (OSError, ValueError):
+                return
+            self._reference_source["tactico"] = source
+            save_app_config({"tactical_reference": path.name})
+            if self._ui_template != "tactico":
+                self._set_ui_template("tactico")
+            else:
+                self._refresh_template_background()
+                self._draw()
+            gallery.destroy()
+
+        for index, path in enumerate(references):
+            try:
+                thumb = Image.open(path).convert("RGB")
+                thumb.thumbnail((158, 95), Image.Resampling.LANCZOS)
+                tile = Image.new("RGB", (162, 99), "#14202B")
+                tile.paste(thumb, ((162-thumb.width)//2, (99-thumb.height)//2))
+                photo = ImageTk.PhotoImage(tile, master=gallery)
+            except (OSError, ValueError):
+                continue
+            photos.append(photo)
+            button = tk.Button(thumb_frame, image=photo, text=f"REFERENCIA {index+1:02d}",
+                               compound="top", command=lambda p=path: show_reference(p),
+                               fg="#D7F4F7", bg="#17222C", activebackground="#2D5863",
+                               activeforeground="#FFFFFF", font=font_body_bold(8),
+                               borderwidth=1, cursor="hand2")
+            button.grid(row=index//2, column=index%2, padx=4, pady=4)
+        gallery._thumb_photos = photos
+        apply_button = tk.Button(preview, text="USAR EN MAPA TÁCTICO",
+                                 command=apply_reference, fg="#11131A", bg="#9DE5F2",
+                                 activeforeground="#11131A", activebackground="#D7F4F7",
+                                 font=font_body_bold(10), borderwidth=0, cursor="hand2")
+        apply_button.pack(fill="x", padx=18, pady=(0, 17))
+        show_reference(references[0])
+        gallery.lift()
+
     def _cycle_ui_template(self):
         keys = tuple(UI_TEMPLATES)
         self._set_ui_template(keys[(keys.index(self._ui_template) + 1) % len(keys)])
@@ -1419,13 +1556,32 @@ class JarvisUI:
         self._draw()
 
     def _refresh_template_background(self):
-        source = self._template_source.get(self._ui_template)
+        source = (None if self._ui_template in {"tactico"} or
+                  (self._ui_template == "visor" and self.RIGHT_W == 0)
+                  else self._template_source.get(self._ui_template))
         self._template_background_photo = None
         self._armor_photo = None
         if source is not None:
             target = source.resize((self.W, self.H), Image.Resampling.LANCZOS)
             target = ImageEnhance.Brightness(target).enhance(0.52 if self._ui_template == "visor" else 0.60)
             self._template_background_photo = ImageTk.PhotoImage(target, master=self.root)
+        self._reference_scene_photo = None
+        scene = self._reference_source.get(self._ui_template) if self.RIGHT_W == 0 or self._ui_template in {"tactico", "orbita"} else None
+        if scene is not None:
+            max_width = (min(700, int((self.CHAT_PANEL_X-self.LEFT_W)*0.92))
+                         if self._ui_template == "visor" else
+                         min(900, int(self.W*0.72)) if self._ui_template == "archivo" else
+                         min(500 if self._ui_template == "orbita" else 650,
+                             self.CENTER_X1-self.CENTER_X0-20))
+            max_height = self.CTRL_Y-HDR_H-50
+            scale = min(max_width/scene.width, max_height/scene.height)
+            target = scene.resize((max(1,round(scene.width*scale)),
+                                   max(1,round(scene.height*scale))),
+                                  Image.Resampling.LANCZOS)
+            target = ImageEnhance.Brightness(target).enhance(
+                0.83 if self._ui_template == "visor" else 0.76 if self._ui_template == "orbita" else
+                0.72 if self._ui_template == "tactico" else 0.67)
+            self._reference_scene_photo = ImageTk.PhotoImage(target, master=self.root)
         if self._ui_template == "armadura" and self._armor_source is not None:
             max_w = int((self.CENTER_X1 - self.CENTER_X0) * 0.94)
             if self.RIGHT_W == 0:
@@ -3865,6 +4021,21 @@ class JarvisUI:
         cx, cy = self.FCX, self.FCY - 28
         radius = min(166, max(95, (self.CENTER_X1 - self.CENTER_X0) * 0.23))
         gold, red, dim = "#FFBA58", "#EF5C45", "#6D3A29"
+        if self._reference_scene_photo is not None:
+            for index, rr in enumerate((radius*.78,radius*1.10)):
+                c.create_arc(cx-rr,cy-rr,cx+rr,cy+rr,
+                             start=self.tick*(.55 if index else -.42),extent=34,
+                             style="arc",outline=gold if index else red,width=3)
+            sweep=math.radians(self.tick*.75)
+            c.create_line(cx,cy,cx+math.cos(sweep)*radius*.8,
+                          cy-math.sin(sweep)*radius*.8,fill=gold,width=2)
+            c.create_oval(cx-5,cy-5,cx+5,cy+5,outline="#FFE5B4",width=2)
+            label_y=self.CTRL_Y-72
+            c.create_rectangle(cx-178,label_y-14,cx+178,label_y+14,
+                               fill="#11131A",outline="#6D3A29")
+            c.create_text(cx,label_y,text="MAPA TÁCTICO / RASTREO ACTIVO",
+                          fill="#FFE5B4",font=font_display(10))
+            return
         for scale, color, width in ((1.16, dim, 2), (0.94, gold, 3), (0.62, red, 2)):
             rr = radius * scale
             points = [coord for index in range(6)
@@ -3915,6 +4086,12 @@ class JarvisUI:
                 c.create_line(x, HDR_H, x, self.CTRL_Y, fill=grid_color)
             for y in range(HDR_H, self.CTRL_Y, 34):
                 c.create_line(self.CENTER_X0, y, self.CENTER_X1, y, fill=grid_color)
+        if self._reference_scene_photo is not None:
+            scene_y = (self.FCY+8 if self._ui_template == "visor" else
+                       self.FCY-28 if self._ui_template == "tactico" else
+                       HDR_H+(self.CTRL_Y-HDR_H)*0.43 if self._ui_template == "orbita" else
+                       HDR_H+(self.CTRL_Y-HDR_H)*.47)
+            c.create_image(self.FCX, scene_y, image=self._reference_scene_photo, anchor="center")
 
         # Tarama çizgisi (yavaş, çok soluk)
         scan_y = (t * 0.7) % (H + 60) - 30
