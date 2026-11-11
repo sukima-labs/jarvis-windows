@@ -22,6 +22,7 @@ from google.genai import types  # type: ignore[reportMissingImports]
 
 from app_config import get_app_config_value, get_backend
 from ui import JarvisUI
+from ucm_events import build_event_prompt
 from memory.memory_manager import load_memory, update_memory, delete_memory, format_memory_for_prompt
 from actions.open_app import open_app
 from actions.sys_info  import sys_info
@@ -51,7 +52,6 @@ CHANNELS         = 1
 SEND_SAMPLE_RATE = 16000
 RECV_SAMPLE_RATE = 24000
 CHUNK_SIZE       = 512  # 32 ms de audio por bloque a 16 kHz
-OUTPUT_FRAME_BYTES = RECV_SAMPLE_RATE * CHANNELS * 2 // 50  # 20 ms a 24 kHz, PCM16 mono
 pya              = pyaudio.PyAudio()
 
 # ── Tool tanımları ──────────────────────────────────────────────────────────
@@ -520,7 +520,7 @@ class JarvisLive:
     def _on_effects_state_change(self, enabled: bool):
         pass
 
-    def _on_vigilance_alert(self, message: str):
+    def _on_vigilance_alert(self, event: tuple[str, str, str]):
         if self._paused or not self._loop or not self.session or self._is_speaking:
             return
         with self._speaking_lock:
@@ -530,10 +530,7 @@ class JarvisLive:
             time.sleep(sound_seconds + 0.12)
         if self._paused or not self.session or self.ui.user_speaking:
             return
-        prompt = (
-            "Avisa en voz con una sola frase breve en español: Atención, señor. Simulación del UCM: "
-            + message + " No uses herramientas ni añadas información externa."
-        )
+        prompt = build_event_prompt(event)
         asyncio.run_coroutine_threadsafe(
             self.session.send_client_content(
                 turns={"role": "user", "parts": [{"text": prompt}]}, turn_complete=True,
@@ -985,10 +982,9 @@ class JarvisLive:
                     if response.data and not echo_turn:
                         with self._speaking_lock:
                             self._mic_gate_until = max(self._mic_gate_until, time.monotonic() + 0.9)
-                        for offset in range(0, len(response.data), OUTPUT_FRAME_BYTES):
-                            self.audio_in_queue.put_nowait(
-                                response.data[offset:offset + OUTPUT_FRAME_BYTES]
-                            )
+                        # Write each Gemini packet as one block to avoid one thread-pool
+                        # dispatch per 20 ms fragment while preserving the PCM sequence.
+                        self.audio_in_queue.put_nowait(response.data)
                         if self._startup_greeting_sent and not self._startup_song_triggered:
                             self._startup_greeting_audio_received = True
 

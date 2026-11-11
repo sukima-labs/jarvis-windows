@@ -18,3 +18,22 @@ EVENTS = (
     ("PUNTO DE INCURSIÓN", "El mapa multiversal muestra dos realidades en contacto. El análisis continúa.", "Multiverso"),
     ("PROTOCOLO DE DEFENSA", "Wakanda ha reforzado la vigilancia alrededor de su tecnología de vibranio.", "Wakanda"),
 )
+
+
+def build_event_prompt(event: tuple[str, str, str]) -> str:
+    """Describe an alert to JARVIS and keep its details available for follow-up."""
+    title, description, related_work = event
+    return (
+        "Acaba de ocurrir un evento dentro del universo del UCM.\n"
+        f"Evento: {title}.\n"
+        f"Descripción: {description}\n"
+        f"Contexto relacionado: {related_work}.\n\n"
+        "Anúncialo con una sola frase breve que empiece exactamente por: "
+        "«Acaba de ocurrir un evento dentro del universo del UCM». "
+        "Explica el evento usando el título, la descripción y el contexto relacionado. "
+        "Conserva estos datos para las preguntas siguientes y explica a qué evento "
+        "se refieren aunque el usuario diga solamente «el evento». No digas que no "
+        "sabes qué evento es. Este aviso es una historia original ambientada en el "
+        "universo del UCM, no una noticia ni un hecho canónico; no lo anuncies como "
+        "una simulación ni inventes detalles de las películas."
+    )

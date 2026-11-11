@@ -25,6 +25,7 @@ from typing import Any, Callable
 import requests
 
 from app_config import get_app_config_value
+from ucm_events import build_event_prompt
 from memory.memory_manager import (
     load_memory,
     update_memory,
@@ -198,13 +199,17 @@ class JarvisLocal:
     def _on_pause_toggle(self, paused: bool):
         self._paused = paused
 
-    def _on_vigilance_alert(self, message: str):
-        if not self._paused and not self._is_speaking:
-            sound_seconds = self.ui.play_vigilance_alert_sfx()
-            if sound_seconds:
-                time.sleep(sound_seconds + 0.12)
-            if not self._paused:
-                self._speak_blocking("Atención, señor. Simulación del UCM: " + message)
+    def _on_vigilance_alert(self, event: tuple[str, str, str]):
+        if self._paused or self._is_speaking:
+            return
+        sound_seconds = self.ui.play_vigilance_alert_sfx()
+        if sound_seconds:
+            time.sleep(sound_seconds + 0.12)
+        if self._paused or not self._loop or self._pending_text_queue is None:
+            return
+        asyncio.run_coroutine_threadsafe(
+            self._pending_text_queue.put(build_event_prompt(event)), self._loop
+        )
 
     def _on_text_command(self, text: str):
         if self._paused or not text.strip():
@@ -230,8 +235,8 @@ class JarvisLocal:
             parts.append(mem_str + "\n\n")
         parts.append(sys_p)
         parts.append(
-            "\n\nNot: Yerel modda calisiyorsun (LM Studio). Kullaniciya kisa, net "
-            "Turkce yanitlar ver. Gerektiginde tool cagirisi yap."
+            "\n\nNota: En modo local (LM Studio), responde siempre en espa\u00f1ol "
+            "latinoamericano, de forma breve, clara y \u00fatil. Usa las herramientas cuando haga falta."
         )
         return "\n".join(parts)
 
